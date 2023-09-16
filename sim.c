@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <gtk/gtk.h>
 
 
 #define MAX_ROM 0xfff                           /* Memory size for rom */

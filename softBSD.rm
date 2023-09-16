@@ -1,0 +1,6 @@
+###This branch is the memory visualization branch
+#This version of the emulator will use GTK library to help visualize the memory space
+to install all nessary packages run the following command
+```
+brew install gtk+3 gtk4 gtkmm gtkmm3 gtkmm4 cairomm
+```
