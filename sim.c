@@ -4,11 +4,17 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <gtk/gtk.h>
+#include <cairo.h>
+#include <math.h>
 
 
 #define MAX_ROM 0xfff                           /* Memory size for rom */
 #define MAX_RAM 0xffffff                            /* Memory size for ram */
 #define MAX_MEM (MAX_ROM+MAX_RAM)               /* ROM and RAM sizes */
+
+#define BLOCK_SIZE 1  // Size of each memory block in pixels
+
+
 
 /* Read/write macros */
 #define READ_8(BASE, ADDR) (BASE)[ADDR]
@@ -46,7 +52,12 @@ void data_bus_recorder(const char *string, unsigned int address);
 /* initiallize memory array to 0 */
 unsigned char g_mem[MAX_MEM+1] = {0};                 /* Memory in one array */
 
+GtkWidget *drawing_area;
+GQueue *modified_addresses;
+unsigned int last_accessed_address = -1;
 
+unsigned int grid_width;
+unsigned int grid_height;
 
 /* struct definition */
 struct section {
@@ -64,6 +75,69 @@ void exit_error(char* fmt, ...) {
     fprintf(stderr, "\n");
     va_end(args);
     exit(EXIT_FAILURE);
+}
+
+static gboolean on_draw_event(GtkWidget *widget, cairo_t *cr, gpointer user_data) {
+    while (!g_queue_is_empty(modified_addresses)) {
+        unsigned int i = (unsigned int)g_queue_pop_head(modified_addresses);
+
+        unsigned int x = i % grid_width;
+        unsigned int y = i / grid_width;
+
+        // Decide color based on segment
+        if (i >= 0x0000c000 && i < 0x00201c00) {         // .text
+            cairo_set_source_rgb(cr, 0.8, 0.2, 0.2);  // Red for .text
+        }
+        else if (i >= 0x00201c00 && i < 0x00231488) {  // .rodata
+            cairo_set_source_rgb(cr, 0.2, 0.8, 0.2);  // Green for .rodata
+        }
+        else if (i >= 0x00231488 && i < 0x00231550) {  // link_set_sys...
+            cairo_set_source_rgb(cr, 0.2, 0.2, 0.8);  // Blue for link_set_sys...
+        }
+        else if (i >= 0x00231550 && i < 0x00231658) {  // link_set_modules
+            cairo_set_source_rgb(cr, 0.8, 0.8, 0.2);  // Yellow for link_set_modules
+        }
+        else if (i >= 0x00231658 && i < 0x00231678) {  // link_set_domains
+            cairo_set_source_rgb(cr, 0.8, 0.2, 0.8);  // Magenta for link_set_domains
+        }
+        else if (i >= 0x00231678 && i < 0x002316c0) {  // link_set_evcnts
+            cairo_set_source_rgb(cr, 0.2, 0.8, 0.8);  // Cyan for link_set_evcnts
+        }
+        else if (i >= 0x002316c0 && i < 0x002316c4) {  // link_set_dkw...
+            cairo_set_source_rgb(cr, 0.4, 0.4, 0.4);  // Grey for link_set_dkw...
+        }
+        else if (i >= 0x002316c4 && i < 0x002316e4) {  // link_set_pro...
+            cairo_set_source_rgb(cr, 0.6, 0.3, 0.3);  // Brown-ish for link_set_pro...
+        }
+        else if (i >= 0x002316e4 && i < 0x00231740) {  // .eh_frame
+            cairo_set_source_rgb(cr, 0.5, 0.5, 0.8);  // Light Blue for .eh_frame
+        }
+        else if (i >= 0x00231740 && i < 0x00248300) {  // .data
+            cairo_set_source_rgb(cr, 0.7, 0.7, 0.7);  // Light Grey for .data
+        }
+        else if (i >= 0x00248300) {  // .bss and anything beyond
+            cairo_set_source_rgb(cr, 0.3, 0.7, 0.3);  // Some shade of green for .bss
+        }
+        else if (i == last_accessed_address) {
+            cairo_set_source_rgb(cr, 1, 0, 0);  // Red for recently accessed
+        } else {
+            double shade = g_mem[i] / 255.0;
+            cairo_set_source_rgb(cr, shade, shade, shade);  // Shade by byte value
+        }
+        printf("Drawing %08x at (%d, %d)\n", i, x, y);
+        cairo_rectangle(cr, x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+        cairo_fill(cr);
+    }
+
+    return FALSE;
+}
+
+void visualize_range(unsigned int start_address, unsigned int end_address) {
+    last_accessed_address = end_address;
+    for (unsigned int addr = start_address; addr <= end_address; addr++) {
+        g_queue_push_tail(modified_addresses, GUINT_TO_POINTER(addr));
+    }
+    gtk_widget_queue_draw(drawing_area);
 }
 
 /* reads in 8 bits from memory array */
@@ -104,6 +178,7 @@ void m68k_write_memory_8(unsigned int address, unsigned int value) {
     }
     data_bus_recorder("m68k_write_memory_8", address);
     WRITE_8(g_mem, address, value);
+    visualize_range(address, address + 1);
 }
 
 /* write in 16 bits to memory array */
@@ -117,6 +192,7 @@ void m68k_write_memory_16(unsigned int address, unsigned int value) {
     }
     data_bus_recorder("m68k_write_memory_16", address);
     WRITE_16(g_mem, address, value);
+    visualize_range(address, address + 2);
 }
 
 /* write in 32 bits to memory array */
@@ -130,6 +206,7 @@ void m68k_write_memory_32(unsigned int address, unsigned int value) {
     }
     data_bus_recorder("m68k_write_memory_32", address);
     WRITE_32(g_mem, address, value);
+    visualize_range(address, address + 3);
 }
 
 unsigned int m68k_read_disassembler_16(unsigned int address)
@@ -150,11 +227,11 @@ unsigned int m68k_read_disassembler_32(unsigned int address)
 
 /* Print the address and data bus */
 void data_bus_recorder(const char *string, unsigned int address) {
-    if(address < MAX_RAM)
-        printf("%s@RAM: %08x\n", string, address);
-    else{
-        printf("%s@ROM: %08x\n", string, address);
-    }
+//    if(address < MAX_RAM)
+//        printf("%s@RAM: %08x\n", string, address);
+//    else{
+//        printf("%s@ROM: %08x\n", string, address);
+//    }
 }
 
 /* The sections to load */
@@ -185,8 +262,30 @@ void load_section(const struct section* sec) {
     fclose(fhandle);
 }
 
+static gboolean emulator_tick(gpointer user_data) {
+    m68k_execute(100000);
+    return TRUE; // return TRUE so it keeps getting called
+}
 
 int main(int argc, char* argv[]) {
+    grid_width = (unsigned int) sqrt(MAX_MEM);
+    grid_height = (MAX_MEM + grid_width - 1) / grid_width;
+
+    modified_addresses = g_queue_new();
+
+    gtk_init(&argc, &argv);
+
+    GtkWidget *window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(window), "Memory Visualization");
+    gtk_window_set_default_size(GTK_WINDOW(window), grid_width * BLOCK_SIZE, grid_height * BLOCK_SIZE);
+
+    drawing_area = gtk_drawing_area_new();
+    gtk_container_add(GTK_CONTAINER(window), drawing_area);
+    g_signal_connect(G_OBJECT(drawing_area), "draw", G_CALLBACK(on_draw_event), NULL);
+
+    g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    gtk_widget_show_all(window);
+
     unsigned int text_section_address = 0x0000c000;
     // Convert the address to bytes and store it at memory[4] to memory[7]
     g_mem[4] = (text_section_address >> 24) & 0xFF;
@@ -200,8 +299,11 @@ int main(int argc, char* argv[]) {
     m68k_set_cpu_type(M68K_CPU_TYPE_68000);
     m68k_pulse_reset();
 
-    while(TRUE){
-        m68k_execute(100000);
-    }
+    g_timeout_add(16, emulator_tick, NULL);
+
+    // Enter the main event loop. This will block until gtk_main_quit is called.
+    gtk_main();
+
+    g_queue_free(modified_addresses);
 
 }
