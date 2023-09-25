@@ -9,6 +9,7 @@
 #define MAX_RAM 0xffffff                            /* Memory size for ram */
 #define MAX_MEM (MAX_ROM+MAX_RAM)               /* ROM and RAM sizes */
 #define EPROM_ADDRESS 0x4100000c              /* EPROM address */
+#define PLANEMASK_ADDRESS 0x4100000B8          /* Plane mask address */
 
 /* Read/write macros */
 #define READ_8(BASE, ADDR) (BASE)[ADDR]
@@ -97,7 +98,8 @@ unsigned int m68k_read_memory_16(unsigned int address) {
 /* reads in 32 bits from memory array */
 unsigned int m68k_read_memory_32(unsigned int address) {
     if (address >= MAX_MEM) {
-        if(address == EPROM_ADDRESS) return MAX_MEM+1;
+        if(address == EPROM_ADDRESS) return MAX_RAM+1;
+        if(address == PLANEMASK_ADDRESS) return 0xff;
         else exit_error("Attempted to read byte(read_32) from address %08x beyond memory size", address);
     }
     data_bus_recorder("m68k_read_memory_32", address);
