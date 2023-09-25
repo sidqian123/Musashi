@@ -178,7 +178,7 @@ void m68k_write_memory_8(unsigned int address, unsigned int value) {
     }
     data_bus_recorder("m68k_write_memory_8", address);
     WRITE_8(g_mem, address, value);
-    visualize_range(address, address + 1);
+    //visualize_range(address, address + 1);
 }
 
 /* write in 16 bits to memory array */
@@ -192,7 +192,7 @@ void m68k_write_memory_16(unsigned int address, unsigned int value) {
     }
     data_bus_recorder("m68k_write_memory_16", address);
     WRITE_16(g_mem, address, value);
-    visualize_range(address, address + 2);
+    //visualize_range(address, address + 2);
 }
 
 /* write in 32 bits to memory array */
@@ -206,7 +206,7 @@ void m68k_write_memory_32(unsigned int address, unsigned int value) {
     }
     data_bus_recorder("m68k_write_memory_32", address);
     WRITE_32(g_mem, address, value);
-    visualize_range(address, address + 3);
+    //visualize_range(address， address + 3);
 }
 
 unsigned int m68k_read_disassembler_16(unsigned int address)
@@ -227,11 +227,11 @@ unsigned int m68k_read_disassembler_32(unsigned int address)
 
 /* Print the address and data bus */
 void data_bus_recorder(const char *string, unsigned int address) {
-//    if(address < MAX_RAM)
-//        printf("%s@RAM: %08x\n", string, address);
-//    else{
-//        printf("%s@ROM: %08x\n", string, address);
-//    }
+    if(address < MAX_RAM)
+        printf("%s@RAM: %08x\n", string, address);
+    else{
+        printf("%s@ROM: %08x\n", string, address);
+    }
 }
 
 /* The sections to load */
@@ -288,15 +288,12 @@ int main(int argc, char* argv[]) {
 
     unsigned int text_section_address = 0x0000c000;
     // Convert the address to bytes and store it at memory[4] to memory[7]
-    g_mem[4] = (text_section_address >> 24) & 0xFF;
-    g_mem[5] = (text_section_address >> 16) & 0xFF;
-    g_mem[6] = (text_section_address >> 8) & 0xFF;
-    g_mem[7] = text_section_address & 0xFF;
+    WRITE_32(g_mem, 4, text_section_address);
     for (unsigned long i = 0; i < sizeof(sections) / sizeof(sections[0]); i++) {
         load_section(&sections[i]);
     }
     m68k_init();
-    m68k_set_cpu_type(M68K_CPU_TYPE_68000);
+    m68k_set_cpu_type(M68K_CPU_TYPE_68030);
     m68k_pulse_reset();
 
     g_timeout_add(16, emulator_tick, NULL);
