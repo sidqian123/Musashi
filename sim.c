@@ -40,6 +40,7 @@ unsigned int  m68k_read_memory_32(unsigned int address);
 void m68k_write_memory_8(unsigned int address, unsigned int value);
 void m68k_write_memory_16(unsigned int address, unsigned int value);
 void m68k_write_memory_32(unsigned int address, unsigned int value);
+void data_bus_recorder(const char *string, unsigned int address);
 
 /* initiallize memory array to 0 */
 unsigned char g_mem[MAX_MEM+1] = {0};                 /* Memory in one array */
@@ -51,6 +52,16 @@ struct section {
     unsigned int address;
     unsigned int size;
 };
+
+
+/* Print the address and data bus */
+void data_bus_recorder(const char *string, unsigned int address) {
+    if(address < MAX_RAM)
+        printf("%s@RAM: %08x\n", string, address);
+    else{
+        printf("%s@ROM: %08x\n", string, address);
+    }
+}
 
 
 /* Exit with an error message.  Use printf syntax. */
@@ -69,6 +80,7 @@ unsigned int m68k_read_memory_8(unsigned int address) {
     if (address >= MAX_MEM) {
         exit_error("Attempted to read byte from address %08x beyond memory size", address);
     }
+    data_bus_recorder("m68k_read_memory_8", address);
     return READ_8(g_mem, address);
 }
 
@@ -77,6 +89,7 @@ unsigned int m68k_read_memory_16(unsigned int address) {
     if (address >= MAX_MEM) {
         exit_error("Attempted to read byte from address %08x beyond memory size", address);
     }
+    data_bus_recorder("m68k_read_memory_16", address);
     return READ_16(g_mem, address);
 }
 
@@ -85,6 +98,7 @@ unsigned int m68k_read_memory_32(unsigned int address) {
     if (address >= MAX_MEM) {
         exit_error("Attempted to read byte from address %08x beyond memory size", address);
     }
+    data_bus_recorder("m68k_read_memory_32", address);
     return READ_32(g_mem, address);
 }
 
@@ -97,6 +111,7 @@ void m68k_write_memory_8(unsigned int address, unsigned int value) {
     if (address <= MAX_ROM) {
         exit_error("Attempted to write byte to ROM address %08x", address);
     }
+    data_bus_recorder("m68k_write_memory_8", address);
     WRITE_8(g_mem, address, value);
 }
 
@@ -109,6 +124,7 @@ void m68k_write_memory_16(unsigned int address, unsigned int value) {
     if (address <= MAX_ROM) {
         exit_error("Attempted to write byte to ROM address %08x", address);
     }
+    data_bus_recorder("m68k_write_memory_16", address);
     WRITE_16(g_mem, address, value);
 }
 
@@ -121,6 +137,7 @@ void m68k_write_memory_32(unsigned int address, unsigned int value) {
     if (address <= MAX_ROM) {
         exit_error("Attempted to write byte to ROM address %08x", address);
     }
+    data_bus_recorder("m68k_write_memory_32", address);
     WRITE_32(g_mem, address, value);
 }
 
