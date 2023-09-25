@@ -8,6 +8,7 @@
 #define MAX_ROM 0xfff                           /* Memory size for rom */
 #define MAX_RAM 0xffffff                            /* Memory size for ram */
 #define MAX_MEM (MAX_ROM+MAX_RAM)               /* ROM and RAM sizes */
+#define EPROM_ADDRESS 0x4100000c              /* EPROM address */
 
 /* Read/write macros */
 #define READ_8(BASE, ADDR) (BASE)[ADDR]
@@ -78,7 +79,7 @@ void exit_error(char* fmt, ...) {
 /* reads in 8 bits from memory array */
 unsigned int m68k_read_memory_8(unsigned int address) {
     if (address >= MAX_MEM) {
-        exit_error("Attempted to read byte from address %08x beyond memory size", address);
+        exit_error("Attempted to read byte(read_8) from address %08x beyond memory size", address);
     }
     data_bus_recorder("m68k_read_memory_8", address);
     return READ_8(g_mem, address);
@@ -87,7 +88,7 @@ unsigned int m68k_read_memory_8(unsigned int address) {
 /* reads in 16 bits from memory array */
 unsigned int m68k_read_memory_16(unsigned int address) {
     if (address >= MAX_MEM) {
-        exit_error("Attempted to read byte from address %08x beyond memory size", address);
+        exit_error("Attempted to read byte(read_16) from address %08x beyond memory size", address);
     }
     data_bus_recorder("m68k_read_memory_16", address);
     return READ_16(g_mem, address);
@@ -96,7 +97,7 @@ unsigned int m68k_read_memory_16(unsigned int address) {
 /* reads in 32 bits from memory array */
 unsigned int m68k_read_memory_32(unsigned int address) {
     if (address >= MAX_MEM) {
-        exit_error("Attempted to read byte from address %08x beyond memory size", address);
+        exit_error("Attempted to read byte(read_32) from address %08x beyond memory size", address);
     }
     data_bus_recorder("m68k_read_memory_32", address);
     return READ_32(g_mem, address);
@@ -150,8 +151,26 @@ unsigned int m68k_read_disassembler_16(unsigned int address)
 
 unsigned int m68k_read_disassembler_32(unsigned int address)
 {
-    if(address > MAX_ROM)
+    //todo: check if the address is EPROM_ADDRESS, if so, return MAX_MEM
+    // you should not receive any error messages after this is implemented on address 4100000c
+    /*
+    context:
+    movl	#PROM_ADDR,%a0		| available memory in bytes
+	movl	%a0@(12),%a0		| (int *)base[3])       -> reading 4100000c here (IMPORTANT)
+	movl	%a0@,%d5
+	RELOC(memavail,%a0)
+	movl	%d5,%a0@		| save memavail
+
+	movl	#PROM_ADDR,%a0		| planemask; 0x0f or 0xff
+	movl	%a0@(184),%a0		| (int *)base[46]
+	movl	%a0@,%d5
+	RELOC(hwplanemask,%a0)
+	movl	%d5,%a0@		| save hwplanemask
+
+     * */
+    if(address > MAX_ROM){
         exit_error("Dasm attempted to read long from ROM address %08x", address);
+    }
     return READ_32(g_mem, address);
 }
 
