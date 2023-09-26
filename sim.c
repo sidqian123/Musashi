@@ -8,8 +8,11 @@
 #define MAX_ROM 0xfff                           /* Memory size for rom */
 #define MAX_RAM 0xffffff                            /* Memory size for ram */
 #define MAX_MEM (MAX_ROM+MAX_RAM)               /* ROM and RAM sizes */
-#define EPROM_ADDRESS 0x4100000c              /* EPROM address */
-#define PLANEMASK_ADDRESS 0x4100000B8          /* Plane mask address */
+#define EPROM_ADDRESS 0x4100000C              /* EPROM address */
+#define PLANEMASK_ADDRESS 0x410000B8          /* Plane mask address */
+#define BOOTARG_ADDRESS 0x410000D4            /* Boot argument address */
+#define BOOTARG_START 0x42000000                /* Boot argument start address */
+#define BOOTARG_END (BOOTARG_START + 64 - 1)  /* Boot argument end address */
 
 /* Read/write macros */
 #define READ_8(BASE, ADDR) (BASE)[ADDR]
@@ -46,6 +49,7 @@ void data_bus_recorder(const char *string, unsigned int address);
 
 /* initiallize memory array to 0 */
 unsigned char g_mem[MAX_MEM+1] = {0};                 /* Memory in one array */
+unsigned char bootarg[64] = {0};                            /* Boot argument */
 
 
 /* struct definition */
@@ -80,6 +84,9 @@ void exit_error(char* fmt, ...) {
 /* reads in 8 bits from memory array */
 unsigned int m68k_read_memory_8(unsigned int address) {
     if (address >= MAX_MEM) {
+        if (address >= BOOTARG_START && address <= BOOTARG_END) {
+            return bootarg[address - BOOTARG_START];
+        }
         exit_error("Attempted to read byte(read_8) from address %08x beyond memory size", address);
     }
     data_bus_recorder("m68k_read_memory_8", address);
@@ -99,7 +106,8 @@ unsigned int m68k_read_memory_16(unsigned int address) {
 unsigned int m68k_read_memory_32(unsigned int address) {
     if (address >= MAX_MEM) {
         if(address == EPROM_ADDRESS) return MAX_RAM+1;
-        if(address == PLANEMASK_ADDRESS) return 0xff;
+        else if(address == PLANEMASK_ADDRESS) return 0xff;
+        else if(address == BOOTARG_ADDRESS) return BOOTARG_START;
         else exit_error("Attempted to read byte(read_32) from address %08x beyond memory size", address);
     }
     data_bus_recorder("m68k_read_memory_32", address);
