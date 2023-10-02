@@ -69,7 +69,6 @@ void data_bus_recorder(const char *string, unsigned int address) {
     }
 }
 
-
 /* Exit with an error message.  Use printf syntax. */
 void exit_error(char* fmt, ...) {
     va_list args;
