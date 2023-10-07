@@ -37,7 +37,7 @@ uint pmmu_translate_addr(uint addr_in)
 	bbits = (m68ki_cpu.mmu_tc>>8)&0xf;
 	cbits = (m68ki_cpu.mmu_tc>>4)&0xf;
 
-//	fprintf(stderr,"PMMU: tcr %08x limit %08x aptr %08x is %x abits %d bbits %d cbits %d\n", m68ki_cpu.mmu_tc, root_limit, root_aptr, is, abits, bbits, cbits);
+	fprintf(stdout,"PMMU: tcr %08x limit %08x aptr %08x is %x abits %d bbits %d cbits %d\n", m68ki_cpu.mmu_tc, root_limit, root_aptr, is, abits, bbits, cbits);
 
 	// get table A offset
 	tofs = (addr_in<<is)>>(32-abits);
@@ -60,11 +60,11 @@ uint pmmu_translate_addr(uint addr_in)
 
 		case 3: // valid 8 byte descriptors
 			tofs *= 8;
-//			fprintf(stderr,"PMMU: reading table A entries at %08x\n", tofs + (root_aptr & 0xfffffffc));
+			fprintf(stdout,"PMMU: reading table A entries at %08x\n", tofs + (root_aptr & 0xfffffffc));
 			tbl_entry2 = m68k_read_memory_32( tofs + (root_aptr & 0xfffffffc));
 			tbl_entry = m68k_read_memory_32( tofs + (root_aptr & 0xfffffffc)+4);
 			tamode = tbl_entry2 & 3;
-//			fprintf(stderr,"PMMU: addr %08x entry %08x entry2 %08x mode %x tofs %x\n", addr_in, tbl_entry, tbl_entry2, tamode, tofs);
+			fprintf(stdout,"PMMU: addr %08x entry %08x entry2 %08x mode %x tofs %x\n", addr_in, tbl_entry, tbl_entry2, tamode, tofs);
 			break;
 	}
 

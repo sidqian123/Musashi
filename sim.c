@@ -7,9 +7,11 @@
 
 #define MAX_ROM 0xfff                           /* Memory size for rom */
 #define MAX_RAM 0xffffff                            /* Memory size for ram */
-#define MAX_MEM (MAX_ROM+MAX_RAM)               /* ROM and RAM sizes */
-#define EPROM_ADDRESS 0x4100000C              /* EPROM address */
+#define MAX_MEM (MAX_RAM)               /* ROM and RAM sizes */
+#define MEMAVAIL_ADDRESS 0x4100000C              /* Memory availble address */
+#define MEMAVAIL_VALUE_ADDRESS 0x41000010   /* Amount of memory configured */
 #define PLANEMASK_ADDRESS 0x410000B8          /* Plane mask address */
+#define PLANEMASK_VALUE_ADDRESS 0x410000C0    /* Plane mask value */
 #define BOOTARG_ADDRESS 0x410000D4            /* Boot argument address */
 #define BOOTARG_START 0x42000000                /* Boot argument start address */
 #define BOOTARG_END (BOOTARG_START + 64 - 1)  /* Boot argument end address */
@@ -37,7 +39,7 @@
 } while(0)
 
 
-/* Prototypes */
+/* Prototypes DO WE NEED THESE HERE? apg*/
 void exit_error(char* fmt, ...);
 unsigned int  m68k_read_memory_8(unsigned int address);
 unsigned int  m68k_read_memory_16(unsigned int address);
@@ -45,7 +47,7 @@ unsigned int  m68k_read_memory_32(unsigned int address);
 void m68k_write_memory_8(unsigned int address, unsigned int value);
 void m68k_write_memory_16(unsigned int address, unsigned int value);
 void m68k_write_memory_32(unsigned int address, unsigned int value);
-void data_bus_recorder(const char *string, unsigned int address);
+void data_bus_recorder(const char *string, unsigned int address, unsigned int size);
 
 /* initiallize memory array to 0 */
 unsigned char g_mem[MAX_MEM+1] = {0};                 /* Memory in one array */
@@ -59,24 +61,59 @@ struct section {
     unsigned int size;
 };
 
+/* track instruction execution */
+void instruction_hook(unsigned int pc)
+{
+    printf("Now executing PC vvv: %08x\n", pc);
+   // unsigned int r = m68k_get_reg(NULL, M68K_REG_SRP);
+    // printf("Current value of D2: %08x\n",r);
+}
 
 /* Print the address and data bus */
-void data_bus_recorder(const char *string, unsigned int address) {
-    if(address < MAX_RAM)
-        printf("%s@RAM: %08x\n", string, address);
-    else{
-        printf("%s@ROM: %08x\n", string, address);
-    }
+void data_bus_recorder(const char *string, unsigned int address, unsigned int size) {
+    if(address <= MAX_RAM)
+        {
+            printf("%s@RAM: %08x", string, address);
+        
+        if(size == 1)
+        {
+            printf(" value: %02x\n", (g_mem[address]) );
+        }
+        else if(size == 2)
+        {
+            printf(" value: %02x%02x\n", g_mem[address], g_mem[address+1] );
+        }
+        else if(size == 4)
+        {
+            printf(" value: %02x%02x%02x%02x\n", g_mem[address], g_mem[address+1], g_mem[address+2], g_mem[address+3]);
+        }
+    }    
 }
 
 /* Exit with an error message.  Use printf syntax. */
-void exit_error(char* fmt, ...) {
+void exit_error(char* fmt, ...)
+{
+    static int guard_val = 0;
+    char buff[100];
+    unsigned int pc;
     va_list args;
-    // Start processing variable arguments
+
+    if(guard_val)
+        return;
+    else
+        guard_val = 1;
+
+    /* FILE *out = stderr; */
+    FILE *out = stdout;
+    
     va_start(args, fmt);
-    vfprintf(stderr, fmt, args);
-    fprintf(stderr, "\n");
+    vfprintf(out, fmt, args);
     va_end(args);
+    fprintf(out, "\n");
+    pc = m68k_get_reg(NULL, M68K_REG_PPC);
+    m68k_disassemble(buff, pc, M68K_CPU_TYPE_68000);
+    fprintf(out, "At %04x: %s\n", pc, buff);
+
     exit(EXIT_FAILURE);
 }
 
@@ -86,83 +123,101 @@ unsigned int m68k_read_memory_8(unsigned int address) {
         if (address >= BOOTARG_START && address <= BOOTARG_END) {
             return bootarg[address - BOOTARG_START];
         }
-        exit_error("Attempted to read byte(read_8) from address %08x beyond memory size", address);
+        exit_error("Attempted to read byte(read_8) from address %08x beyond memory size\n", address);
     }
-    data_bus_recorder("m68k_read_memory_8", address);
+    data_bus_recorder("m68k_read_memory_8", address, 1);
     return READ_8(g_mem, address);
 }
 
 /* reads in 16 bits from memory array */
 unsigned int m68k_read_memory_16(unsigned int address) {
     if (address >= MAX_MEM) {
-        exit_error("Attempted to read byte(read_16) from address %08x beyond memory size", address);
+        exit_error("Attempted to read byte(read_16) from address %08x beyond memory size\n", address);
     }
-    data_bus_recorder("m68k_read_memory_16", address);
+    data_bus_recorder("m68k_read_memory_16", address, 2);
     return READ_16(g_mem, address);
 }
 
 /* reads in 32 bits from memory array */
 unsigned int m68k_read_memory_32(unsigned int address) {
+    
     if (address >= MAX_MEM) {
-        if(address == EPROM_ADDRESS) return MAX_RAM+1;
-        else if(address == PLANEMASK_ADDRESS) return 0xff;
-        else if(address == BOOTARG_ADDRESS) return BOOTARG_START;
-        else exit_error("Attempted to read byte(read_32) from address %08x beyond memory size", address);
+        if(address == MEMAVAIL_ADDRESS) {
+            printf("Read 32 from MEMAVAIL_ADDRESS (%08x) value: %08x\n",MEMAVAIL_ADDRESS, MEMAVAIL_VALUE_ADDRESS);
+            return MEMAVAIL_VALUE_ADDRESS;
+        }
+        else if(address == MEMAVAIL_VALUE_ADDRESS) {
+            printf("Read 32 from MEMAVAIL_VALUE_ADDRESS (%08x) value: %08x\n", MEMAVAIL_VALUE_ADDRESS, MAX_MEM+1);
+            return MAX_MEM+1;
+        }
+        else if(address == PLANEMASK_ADDRESS) {
+            printf("Read 32 from PLANEMASK_ADDRESS (%08x) value: %08x\n", PLANEMASK_ADDRESS, PLANEMASK_VALUE_ADDRESS);
+            return PLANEMASK_VALUE_ADDRESS;
+        }
+        else if(address == PLANEMASK_VALUE_ADDRESS) {
+            printf("Read 32 from PLANEMASK_VALUE_ADDRESS (%08x) value: %08x\n", PLANEMASK_VALUE_ADDRESS, 0xff);
+            return 0xff;
+        }
+        else if(address == BOOTARG_ADDRESS) {
+            printf("Read 32 from BOOTARG_ADDRESS (%08x) value: %08x\n", BOOTARG_ADDRESS, BOOTARG_START);
+            return BOOTARG_START;
+        }
+        else exit_error("Attempted to read byte(read_32) from address %08x beyond memory size\n", address);
     }
-    data_bus_recorder("m68k_read_memory_32", address);
+    data_bus_recorder("m68k_read_memory_32", address, 4);
     return READ_32(g_mem, address);
 }
 
 /* write in 8 bits to memory array */
 void m68k_write_memory_8(unsigned int address, unsigned int value) {
     if (address > MAX_MEM) {
-        exit_error("Attempted to write byte to address %08x beyond memory size", address);
+        exit_error("Attempted to write byte to address %08x beyond memory size\n", address);
     }
     // Check if the address is within the ROM range
     if (address <= MAX_ROM) {
         exit_error("Attempted to write byte to ROM address %08x", address);
     }
-    data_bus_recorder("m68k_write_memory_8", address);
     WRITE_8(g_mem, address, value);
+    data_bus_recorder("m68k_write_memory_8", address, 1);
 }
 
 /* write in 16 bits to memory array */
 void m68k_write_memory_16(unsigned int address, unsigned int value) {
     if (address > MAX_MEM) {
-        exit_error("Attempted to write byte to address %08x beyond memory size", address);
+        exit_error("Attempted to write byte to address %08x beyond memory size\n", address);
     }
     // Check if the address is within the ROM range
     if (address <= MAX_ROM) {
         exit_error("Attempted to write byte to ROM address %08x", address);
     }
-    data_bus_recorder("m68k_write_memory_16", address);
     WRITE_16(g_mem, address, value);
+    data_bus_recorder("m68k_write_memory_16", address, 2);
 }
 
 /* write in 32 bits to memory array */
 void m68k_write_memory_32(unsigned int address, unsigned int value) {
     if (address > MAX_MEM) {
-        exit_error("Attempted to write byte to address %08x beyond memory size", address);
+        exit_error("Attempted to write byte to address %08x beyond memory size\n", address);
     }
     // Check if the address is within the ROM range
     if (address <= MAX_ROM) {
         exit_error("Attempted to write byte to ROM address %08x", address);
     }
-    data_bus_recorder("m68k_write_memory_32", address);
     WRITE_32(g_mem, address, value);
+    data_bus_recorder("m68k_write_memory_32", address, 4);
 }
 
 unsigned int m68k_read_disassembler_16(unsigned int address)
 {
     if(address > MAX_ROM)
-        exit_error("Disassembler attempted to read word from ROM address %08x", address);
+        exit_error("Disassembler attempted to read word from ROM address %08x\n", address);
     return READ_16(g_mem, address);
 }
 
 unsigned int m68k_read_disassembler_32(unsigned int address)
 {
     if(address > MAX_ROM){
-        exit_error("Disassembler attempted to read long from ROM address %08x", address);
+        exit_error("Disassembler attempted to read long from ROM address %08x\n", address);
     }
     return READ_32(g_mem, address);
 }
