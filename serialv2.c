@@ -1,45 +1,18 @@
-// serial version 2
-// this file works with the assumption that we're using bit shifting operations
+// Note:  only working with asynchronous mode, not HDLC or synchronous
 
 
-/* TO DO ------------------------------------------------
+/* ----------------------- TO DO ------------------------------------------------
 
- 
-1.  make functions that control reads/writes to control + status registers
+1.  make functions that control reads/writes to control + status registers (do in forms of macros)
 2.  circular buffer
-
 
 (maybe: emulate interrupts)
 
 */
-
-
-
-
 #include <ctype.h> // for toupper
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
-
-
-/*--------------------------FROM SIM.C---------------------------------------------*/
-
-// maybe change this later if we don't want the program to end whenver there is an error
-// reading/writing to the serial chip
-void exit_error(char* fmt, ...){
-    va_list args;
-    // Start processing variable arguments
-    va_start(args, fmt);
-    vfprintf(stderr, fmt, args);
-    fprintf(stderr, "\n");
-    va_end(args);
-    exit(EXIT_FAILURE);
-}
-
-#define READ_8(BASE, ADDR) (BASE)[ADDR]
-#define WRITE_8(BASE, ADDR, VAL) (BASE)[ADDR] = (VAL)&0xff
-
-/*-------------------------------------------------------------------------------*/
 
 // circular buffer struct
 struct circular_buffer{
@@ -98,40 +71,178 @@ void buffer_print(struct circular_buffer* buffer){
     }
 }
 
-
 // struct definition: represents each of the 4 registers that are used for serial communication
 // most likely that we'll only be reading to one channel from the microprocessor, but I'm just keeping
 // this in there
 struct serial_chip{
 
-    /* ---------- SIO BUFFERS
+    /* ---------- SIO BUFFERS ------------------------------------------
      
     these buffers should be circular buffers
     make sure that reading/writing only happen if there is space within buffer
     if read/write pointers overlap, buffer is full -> don't write anymore to buffer
     if read/write are one apart, buffer is empty
 
-    Note: Waiting to hear back from Goodney to see if we can make A channel and B channel one array, or
-    if we keep separate ones for Receive and Transmit <- also look on dataseet
-
-    */
+    ---------------------------------------------------------------------*/
 
     struct circular_buffer aReceive; 
     struct circular_buffer aTransmit;
     struct circular_buffer bReceive;
     struct circular_buffer bTransmit;
 
-    //---------- CONTROL AND STATUS REGISTERS -------------------------------------
+    //---------- CONTROL AND STATUS REGISTERS ------------------------------------- 
+    // each channel has their own set of registers that act almost exactly the same
+    // channel B one extra status register SR[2], whose contents are then used in control register CR[2]
+    // channel A status register SR[2] is unused, however I'm keeping the sizes of the registers the same for
+    // consistency
 
-    unsigned char controlRegister[8];
-    unsigned char statusRegister[5];
+    unsigned char controlRegisterA[8];
+    unsigned char statusRegisterA[5];
+
+    unsigned char controlRegisterB[8];
+    unsigned char statusRegisterB[5];
+
+    unsigned int TxA_byte_count;
+    unsigned int TxB_byte_count;
+
 };
-
 
 // Unlike C++ structs in C can't have member functions, so it will be a global variable
 // that is called by functions below, also have to specify that serial_chip is struct in
 // declaration
 struct serial_chip chip;
+
+// ------------------------------CONTROL REGISTER MACROS ------------------------------------
+
+
+// status: can be 's' or 'c' for set and clear respectively
+#define RECEIVE_ENABLE(CHANNEL, STATUS) (
+    if(CHANNEL == 'A'){
+        if(status == 's'){
+            chip.controlRegisterA[0] |= (1<<0);
+        }
+        else if(status == 'c'){
+            chip.controlRegisterA[0] &= ~(1<<0);
+        }
+    }
+    else if(CHANNEL == 'B'){
+        if(status == 's'){
+            chip.controlRegisterB[0] |= (1<<0);
+        }
+        else if(status == 'c'){
+            chip.controlRegisterB[0] &= ~(1<<0);
+        }
+    }
+)
+
+
+// ----------------------- STATUS REGISTER MACROS --------------------------------
+
+
+// ----------------------- STATUS REGISTER 0 ---------------------------------------
+
+
+// Receive Char Available - Status Register 0, bit 0 
+#define RECEIVE_CHAR_AVAILABLE(CHANNEL, STATUS) (
+    if(CHANNEL == 'A'){
+        if(status == 's'){
+            chip.statusRegisterA[0] |= (1<<0);
+        }
+        else if(status == 'c'){
+            chip.statusRegisterA[0] &= ~(1<<0);
+        }
+    }
+    else if(CHANNEL == 'B'){
+        if(status == 's'){
+            chip.statusRegisterB[0] |= (1<<0);
+        }
+        else if(status == 'c'){
+            chip.statusRegisterB[0] &= ~(1<<0);
+        }
+    }
+)
+
+// Interrupt Pending - Status Register 0, bit 1 (CHANNEL A ONLY)
+#define INTERRUPT_PENDING(STATUS) (
+    if(status == 's'){
+        chip.statusRegisterA[0] |= (1<<1);
+    }
+    else if(status == 'c'){
+        chip.statusRegisterA[0] &= ~(1<<1);
+    }
+)
+
+// Transmitter Buffer Empty - Status Register 0, bit 2
+#define TRANSMITTER_BUFFER_EMPTY(CHANNEL, STATUS) (
+    if(CHANNEL == 'A'){
+        if(status == 's'){
+            chip.statusRegisterA[0] |= (1<<2);
+        }
+        else if(status == 'c'){
+            chip.statusRegisterA[0] &= ~(1<<2);
+        }
+    }
+    else if(CHANNEL == 'B'){
+        if(status == 's'){
+            chip.statusRegisterB[0] |= (1<<2);
+        }
+        else if(status == 'c'){
+            chip.statusRegisterB[0] &= ~(1<<2);
+        }
+    }
+)
+
+// DCD status - Status Register 
+
+// DCD: Data Carrier Detect - input goes low to indicate the presence of valid serial data at RxD (in channels A or B)
+// This one is kinda weird; Instead of saying just DCD, the datasheet says the inverse of the state !DCD. This is probably because the chip reads
+// !DCD, and not DCD by itself). There are a lot of bits in the status register that behave like this. 
+
+#define NOT_DCD(CHANNEL, STATUS) (
+    if(CHANNEL == 'A'){
+        if(status == 's'){
+            chip.statusRegisterA[1] |= (1<<3);
+        }
+        else if(status == 'c'){
+            chip.statusRegisterA[1] &= ~(1<<3);
+        }
+    }
+    else if(CHANNEL == 'B'){
+        if(status == 's'){
+            chip.statusRegisterB[1] |= (1<<3);
+        }
+        else if(status == 'c'){
+            chip.statusRegisterB[1] &= ~(1<<3);
+        }
+    }
+)
+
+// -------------------------------------------------------------------------------
+
+// --------------------- STATUS REGISTER 1 ------------------------------------------
+
+// All sent -  Status Register 0, bit 1
+#define ALL_SENT(CHANNEL, STATUS) (
+    if(CHANNEL == 'A'){
+        if(status == 's'){
+            chip.statusRegisterA[1] |= (1<<0);
+        }
+        else if(status == 'c'){
+            chip.statusRegisterA[1] &= ~(1<<0);
+        }
+    }
+    else if(CHANNEL == 'B'){
+        if(status == 's'){
+            chip.statusRegisterB[1] |= (1<<0);
+        }
+        else if(status == 'c'){
+            chip.statusRegisterB[1] &= ~(1<<0);
+        }
+    }
+)
+
+// ---------------------------------------------------------------------------
+
 
 // setting everything to 0
 void chip_init(){
@@ -140,49 +251,85 @@ void chip_init(){
     buffer_init(&chip.aTransmit);
     buffer_init(&chip.bReceive);
     buffer_init(&chip.bTransmit);
-    // initialize control and status registers to 0
-    for(int i=0; i<8; ++i){
-        chip.statusRegister[i] = 0;
-        if(i<5){
-            chip.controlRegister[i] = 0;
-        }
-    }
-}
 
+    // CONTROL INIT
+    RECEIVE_ENABLE('A', 'c');
+    RECEIVE_ENABLE('B', 'c');
+
+    // STATUS INIT
+    RECEIVE_CHAR_AVAILABLE('A', 'c');
+    RECEIVE_CHAR_AVAILABLE('B', 'c');
+    INTERRUPT_PENDING('A', 'c');
+    INTERRUPT_PENDING('A', 'c');
+    TRANSMITTER_BUFFER_EMPTY('A', 's');
+    TRANSMITTER_BUFFER_EMPTY('B', 's');
+    ALL_SENT('A', 'c');
+    ALL_SENT('B', 'c');
+    
+    unsigned int TxA_byte_count = 0;
+    unsigned int TxB_byte_count = 0;
+}
 
 // FUNCTION PARAMETERS:
 // channel = decide between a and b channels
 // val = new val to be written into said index
 
+// function should be called only when Tx sent is equal to the number of bytes in the Tx buffer
 
-// transmit: processor (m68k) -> serial chip's transmit buffer -> other separate devices [one byte at a time]
-unsigned char serial_transmit(char channel, char val){
+// ---------- transmit: processor (m68k) -> serial chip's transmit buffer -> other separate devices [one byte at a time]----------------------------
+
+void transmit_write(char channel, char val){
     if(toupper(channel) == 'A'){
-        WRITE_8(chip.aTransmit, &chip.aTransmit.writePointer, val);
-        return buffer_read(&chip.aTransmit);
+        buffer_write(&chip.aTransmit, val);
     }
     else if(toupper(channel) == 'B'){
-        WRITE_8(chip.bTransmit, &chip.bTransmit.writePointer, val);
-        return buffer_read(&chip.bTransmit);
+        buffer_write(&chip.bTransmit, val);
     }
     else{ // Only allowed to look at A and B channels
-        exit_error("Invalid channel name. Use either 'A' or 'B'");
+        printf("Invalid channel name. Use either 'A' or 'B'");
     }
 }
 
-// receive: other separate devices -> serial chip's receive buffer -> processor (m68k) [one byte at a time]
-unsigned char serial_read(char channel){
-
+unsigned char transmit_read(char channel){
     if(toupper(channel) == 'A'){
-        return chip.aReceive[/* buffer read pointer */];
+        return buffer_write(&chip.aTransmit);
     }
     else if(toupper(channel) == 'B'){
-        return chip.bReceive[/* buffer read pointer */];
+        return buffer_write(&chip.bTransmit);
     }
     else{ // Only allowed to look at A and B channels
-        exit_error("Invalid channel name. Use either 'A' or 'B'");
+        printf("Invalid channel name. Use either 'A' or 'B'");
     }
 }
+
+// ---------------------------------------------------------------------------------------------------
+
+// -------------- RECEIVE: other separate devices -> serial chip's receive buffer -> processor (m68k) [one byte at a time] ---------------------
+void receive_write(char channel, char val){
+    if(toupper(channel) == 'A'){
+        buffer_write(&chip.aReceive, val);
+    }
+    else if(toupper(channel) == 'B'){
+        buffer_write(&chip.bReceive, val);
+    }
+    else{ // Only allowed to look at A and B channels
+        printf("Invalid channel name. Use either 'A' or 'B'");
+    }
+}
+
+unsigned char receive_read(char channel){
+    if(toupper(channel) == 'A'){
+        return buffer_write(&chip.aReceive);
+    }
+    else if(toupper(channel) == 'B'){
+        return buffer_write(&chip.bReceive);
+    }
+    else{ // Only allowed to look at A and B channels
+        printf("Invalid channel name. Use either 'A' or 'B'");
+    }
+}
+
+// -------------------------------------------------------------------------------------------------------------------------------------
 
 // for output purposes
 void print_register(char channel, char type){
@@ -194,7 +341,7 @@ void print_register(char channel, char type){
             buffer_print(&chip.aReceive);
         }
         else{
-            exit_error("Invalid channel type");
+            printf("Invalid channel type");
         }
     }
     else if(toupper(channel) == 'B'){
@@ -205,7 +352,7 @@ void print_register(char channel, char type){
             buffer_print(&chip.bReceive);
         }
         else{
-            exit_error("Invalid channel type. Use either 't' (transmit) or 'r' (receive)");
+            printf("Invalid channel type. Use either 't' (transmit) or 'r' (receive)");
         }
     }  
     else{
