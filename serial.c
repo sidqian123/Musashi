@@ -112,6 +112,10 @@ struct serial_chip{
 // declaration
 struct serial_chip chip;
 
+
+// Instead of having to memorize all of the bits of each of the registers, I have decided to write a bunch of macros
+// that set and clear the bits instead
+
 // ------------------------------CONTROL REGISTER MACROS ------------------------------------
 
 
@@ -192,13 +196,13 @@ struct serial_chip chip;
     }
 )
 
-// DCD status - Status Register 
+// DCD status - Status Register 0, bit 3
 
 // DCD: Data Carrier Detect - input goes low to indicate the presence of valid serial data at RxD (in channels A or B)
-// This one is kinda weird; Instead of saying just DCD, the datasheet says the inverse of the state !DCD. This is probably because the chip reads
+// This one is kinda weird; Instead of saying just DCD, the datasheet says that it inverts the state of !DCD input. This is because the chip reads
 // !DCD, and not DCD by itself). There are a lot of bits in the status register that behave like this. 
 
-#define NOT_DCD(CHANNEL, STATUS) (
+#define DCD_STATUS(CHANNEL, STATUS) (
     if(CHANNEL == 'A'){
         if(status == 's'){
             chip.statusRegisterA[1] |= (1<<3);
@@ -213,6 +217,81 @@ struct serial_chip chip;
         }
         else if(status == 'c'){
             chip.statusRegisterB[1] &= ~(1<<3);
+        }
+    }
+)
+
+// Sync Status - Status Register 0, bit 4
+// There are multiple sync modes that the serial chip can use: async, sync, monosync, bisync, HDLC. However, for this model, we will only be
+// considering aysnc mode
+// Like DCD, inverts state of !SYNC input, giving SYNC
+
+#define SYNC_STATUS(CHANNEL, STATUS) (
+    if(CHANNEL == 'A'){
+        if(status == 's'){
+            chip.statusRegisterA[1] |= (1<<4);
+        }
+        else if(status == 'c'){
+            chip.statusRegisterA[1] &= ~(1<<4);
+        }
+    }
+    else if(CHANNEL == 'B'){
+        if(status == 's'){
+            chip.statusRegisterB[1] |= (1<<4);
+        }
+        else if(status == 'c'){
+            chip.statusRegisterB[1] &= ~(1<<4);
+        }
+    }
+)
+
+// CTS Status - Status Register 0 , bit 5
+// Inverts !CTS input, giving CTS input
+// when thisbit is flipped, causes an external/status interrupt request
+
+#define CTS_STATUS(CHANNEL, STATUS) (
+    if(CHANNEL == 'A'){
+        if(status == 's'){
+            chip.statusRegisterA[1] |= (1<<5);
+        }
+        else if(status == 'c'){
+            chip.statusRegisterA[1] &= ~(1<<5);
+        }
+    }
+    else if(CHANNEL == 'B'){
+        if(status == 's'){
+            chip.statusRegisterB[1] |= (1<<5);
+        }
+        else if(status == 'c'){
+            chip.statusRegisterB[1] &= ~(1<<5);
+        }
+    }
+)
+
+// Idle/CRC - Status Register 0, bit 6
+// only used in synchronous mode or HDLC mode, so we will be skipping the macro
+
+// Break/Abort - Status Register 0, bit 7
+// when this bit is flipped, causes an external/status interrupt
+// set when break sequence is detected (null character plus framing error) when RxD is low, (spacing?), for
+// more than one character at a time
+// cleared when RxD returns to high
+
+#define BREAK_STATUS(CHANNEL, STATUS) (
+    if(CHANNEL == 'A'){
+        if(status == 's'){
+            chip.statusRegisterA[1] |= (1<<7);
+        }
+        else if(status == 'c'){
+            chip.statusRegisterA[1] &= ~(1<<7);
+        }
+    }
+    else if(CHANNEL == 'B'){
+        if(status == 's'){
+            chip.statusRegisterB[1] |= (1<<7);
+        }
+        else if(status == 'c'){
+            chip.statusRegisterB[1] &= ~(1<<7);
         }
     }
 )
