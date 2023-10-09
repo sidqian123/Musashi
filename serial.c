@@ -124,24 +124,24 @@ struct serial_chip chip;
 // --------------- STATUS REGISTER 3 ------------------------
 
 // Receiver Enable - Control Register 3, bit 0
-#define RECEIVE_ENABLE(CHANNEL, STATUS) (
-    if(CHANNEL == 'A'){
-        if(status == 's'){
-            chip.controlRegisterA[3] |= (1<<0);
-        }
-        else if(status == 'c'){
-            chip.controlRegisterA[3] &= ~(1<<0);
-        }
+#define RECEIVE_ENABLE(CHANNEL, STATUS) \
+    if(CHANNEL == 'A'){\
+        if(STATUS == 's'){\
+            chip.controlRegisterA[3] |= (1<<0);\
+        }\
+        else if(STATUS == 'c'){\
+            chip.controlRegisterA[3] &= ~(1<<0);\
+        }\
+    }\
+    else if(CHANNEL == 'B'){\
+        if(STATUS == 's'){\
+            chip.controlRegisterB[3] |= (1<<0);\
+        }\
+        else if(STATUS == 'c'){\
+            chip.controlRegisterB[0] &= ~(1<<0);\
+        }\
     }
-    else if(CHANNEL == 'B'){
-        if(status == 's'){
-            chip.controlRegisterB[3] |= (1<<0);
-        }
-        else if(status == 'c'){
-            chip.controlRegisterB[0] &= ~(1<<0);
-        }
-    }
-)
+
 
 // ----------------------------------------------------------
 
@@ -149,24 +149,24 @@ struct serial_chip chip;
 
 // Transmitter Enable - Status Register 5, bit 3
 
-#define TRANSMITTER_ENABLE(CHANNEL, STATUS) (
-    if(CHANNEL == 'A'){
-        if(status == 's'){
-            chip.controlRegisterA[5] |= (1<<3);
-        }
-        else if(status == 'c'){
-            chip.controlRegisterA[5] &= ~(1<<3);
-        }
+#define TRANSMITTER_ENABLE(CHANNEL, STATUS) \
+    if(CHANNEL == 'A'){\
+        if(STATUS == 's'){\
+            chip.controlRegisterA[5] |= (1<<3);\
+        }\
+        else if(STATUS == 'c'){\
+            chip.controlRegisterA[5] &= ~(1<<3);\
+        }\
+    }\
+    else if(CHANNEL == 'B'){\
+        if(STATUS == 's'){\
+            chip.controlRegisterB[5] |= (1<<3);\
+        }\
+        else if(STATUS == 'c'){\
+            chip.controlRegisterB[5] &= ~(1<<3);\
+        }\
     }
-    else if(CHANNEL == 'B'){
-        if(status == 's'){
-            chip.controlRegisterB[5] |= (1<<3);
-        }
-        else if(status == 'c'){
-            chip.controlRegisterB[5] &= ~(1<<3);
-        }
-    }
-)
+
 
 // ---------------------------------------------------
 
@@ -177,54 +177,54 @@ struct serial_chip chip;
 
 
 // Receive Char Available - Status Register 0, bit 0 
-#define RECEIVE_CHAR_AVAILABLE(CHANNEL, STATUS) (
-    if(CHANNEL == 'A'){
-        if(status == 's'){
-            chip.statusRegisterA[0] |= (1<<0);
-        }
-        else if(status == 'c'){
-            chip.statusRegisterA[0] &= ~(1<<0);
-        }
+#define RECEIVE_CHAR_AVAILABLE(CHANNEL, STATUS) \
+    if(CHANNEL == 'A'){\
+        if(STATUS == 's'){\
+            chip.statusRegisterA[0] |= (1<<0);\
+        }\
+        else if(STATUS == 'c'){\
+            chip.statusRegisterA[0] &= ~(1<<0);\
+        }\
+    }\
+    else if(CHANNEL == 'B'){\
+        if(STATUS == 's'){\
+            chip.statusRegisterB[0] |= (1<<0);\
+        }\
+        else if(STATUS == 'c'){\
+            chip.statusRegisterB[0] &= ~(1<<0);\
+        }\
     }
-    else if(CHANNEL == 'B'){
-        if(status == 's'){
-            chip.statusRegisterB[0] |= (1<<0);
-        }
-        else if(status == 'c'){
-            chip.statusRegisterB[0] &= ~(1<<0);
-        }
-    }
-)
+
 
 // Interrupt Pending - Status Register 0, bit 1 (CHANNEL A ONLY)
-#define INTERRUPT_PENDING(STATUS) (
-    if(status == 's'){
-        chip.statusRegisterA[0] |= (1<<1);
+#define INTERRUPT_PENDING(STATUS) \
+    if(STATUS == 's'){\
+        chip.statusRegisterA[0] |= (1<<1);\
+    }\
+    else if(STATUS == 'c'){\
+        chip.statusRegisterA[0] &= ~(1<<1);\
     }
-    else if(status == 'c'){
-        chip.statusRegisterA[0] &= ~(1<<1);
-    }
-)
+
 
 // Transmitter Buffer Empty - Status Register 0, bit 2
-#define TRANSMITTER_BUFFER_EMPTY(CHANNEL, STATUS) (
-    if(CHANNEL == 'A'){
-        if(status == 's'){
-            chip.statusRegisterA[0] |= (1<<2);
-        }
-        else if(status == 'c'){
-            chip.statusRegisterA[0] &= ~(1<<2);
-        }
+#define TRANSMITTER_BUFFER_EMPTY(CHANNEL, STATUS) \
+    if(CHANNEL == 'A'){\
+        if(STATUS == 's'){\
+            chip.statusRegisterA[0] |= (1<<2);\
+        }\
+        else if(STATUS == 'c'){\
+            chip.statusRegisterA[0] &= ~(1<<2);\
+        }\
+    }\
+    else if(CHANNEL == 'B'){\
+        if(STATUS == 's'){\
+            chip.statusRegisterB[0] |= (1<<2);\
+        }\
+        else if(STATUS == 'c'){\
+            chip.statusRegisterB[0] &= ~(1<<2);\
+        }\
     }
-    else if(CHANNEL == 'B'){
-        if(status == 's'){
-            chip.statusRegisterB[0] |= (1<<2);
-        }
-        else if(status == 'c'){
-            chip.statusRegisterB[0] &= ~(1<<2);
-        }
-    }
-)
+
 
 // DCD status - Status Register 0, bit 3
 
@@ -232,71 +232,71 @@ struct serial_chip chip;
 // This one is kinda weird; Instead of saying just DCD, the datasheet says that it inverts the state of !DCD input. This is because the chip reads
 // !DCD, and not DCD by itself). There are a lot of bits in the status register that behave like this. 
 
-#define DCD_STATUS(CHANNEL, STATUS) (
-    if(CHANNEL == 'A'){
-        if(status == 's'){
-            chip.statusRegisterA[0] |= (1<<3);
-        }
-        else if(status == 'c'){
-            chip.statusRegisterA[0] &= ~(1<<3);
-        }
+#define DCD_STATUS(CHANNEL, STATUS) \
+    if(CHANNEL == 'A'){\
+        if(STATUS == 's'){\
+            chip.statusRegisterA[0] |= (1<<3);\
+        }\
+        else if(STATUS == 'c'){\
+            chip.statusRegisterA[0] &= ~(1<<3);\
+        }\
+    }\
+    else if(CHANNEL == 'B'){\
+        if(STATUS == 's'){\
+            chip.statusRegisterB[0] |= (1<<3);\
+        }\
+        else if(STATUS == 'c'){\
+            chip.statusRegisterB[0] &= ~(1<<3);\
+        }\
     }
-    else if(CHANNEL == 'B'){
-        if(status == 's'){
-            chip.statusRegisterB[0] |= (1<<3);
-        }
-        else if(status == 'c'){
-            chip.statusRegisterB[0] &= ~(1<<3);
-        }
-    }
-)
+
 
 // Sync Status - Status Register 0, bit 4
 // There are multiple sync modes that the serial chip can use: async, sync, monosync, bisync, HDLC. However, for this model, we will only be
 // considering aysnc mode
 // Like DCD, inverts state of !SYNC input, giving SYNC
 
-#define SYNC_STATUS(CHANNEL, STATUS) (
-    if(CHANNEL == 'A'){
-        if(status == 's'){
-            chip.statusRegisterA[0] |= (1<<4);
-        }
-        else if(status == 'c'){
-            chip.statusRegisterA[0] &= ~(1<<4);
-        }
+#define SYNC_STATUS(CHANNEL, STATUS) \
+    if(CHANNEL == 'A'){\
+        if(STATUS == 's'){\
+            chip.statusRegisterA[0] |= (1<<4);\
+        }\
+        else if(STATUS == 'c'){\
+            chip.statusRegisterA[0] &= ~(1<<4);\
+        }\
+    }\
+    else if(CHANNEL == 'B'){\
+        if(STATUS == 's'){\
+            chip.statusRegisterB[0] |= (1<<4);\
+        }\
+        else if(STATUS == 'c'){\
+            chip.statusRegisterB[0] &= ~(1<<4);\
+        }\
     }
-    else if(CHANNEL == 'B'){
-        if(status == 's'){
-            chip.statusRegisterB[0] |= (1<<4);
-        }
-        else if(status == 'c'){
-            chip.statusRegisterB[0] &= ~(1<<4);
-        }
-    }
-)
+
 
 // CTS Status - Status Register 0 , bit 5
 // Inverts !CTS input, giving CTS input
 // when thisbit is flipped, causes an external/status interrupt request
 
-#define CTS_STATUS(CHANNEL, STATUS) (
-    if(CHANNEL == 'A'){
-        if(status == 's'){
-            chip.statusRegisterA[0] |= (1<<5);
-        }
-        else if(status == 'c'){
-            chip.statusRegisterA[0] &= ~(1<<5);
-        }
+#define CTS_STATUS(CHANNEL, STATUS) \
+    if(CHANNEL == 'A'){\
+        if(STATUS == 's'){\
+            chip.statusRegisterA[0] |= (1<<5);\
+        }\
+        else if(STATUS == 'c'){\
+            chip.statusRegisterA[0] &= ~(1<<5);\
+        }\
+    }\
+    else if(CHANNEL == 'B'){\
+        if(STATUS == 's'){\
+            chip.statusRegisterB[0] |= (1<<5);\
+        }\
+        else if(STATUS == 'c'){\
+            chip.statusRegisterB[0] &= ~(1<<5);\
+        }\
     }
-    else if(CHANNEL == 'B'){
-        if(status == 's'){
-            chip.statusRegisterB[0] |= (1<<5);
-        }
-        else if(status == 'c'){
-            chip.statusRegisterB[0] &= ~(1<<5);
-        }
-    }
-)
+
 
 // Idle/CRC - Status Register 0, bit 6
 // only used in synchronous mode or HDLC mode, so we will be skipping the macro
@@ -307,48 +307,48 @@ struct serial_chip chip;
 // more than one character at a time
 // cleared when RxD returns to high
 
-#define BREAK_STATUS(CHANNEL, STATUS) (
-    if(CHANNEL == 'A'){
-        if(status == 's'){
-            chip.statusRegisterA[0] |= (1<<7);
-        }
-        else if(status == 'c'){
-            chip.statusRegisterA[0] &= ~(1<<7);
-        }
+#define BREAK_STATUS(CHANNEL, STATUS) \
+    if(CHANNEL == 'A'){\
+        if(STATUS == 's'){\
+            chip.statusRegisterA[0] |= (1<<7);\
+        }\
+        else if(STATUS == 'c'){\
+            chip.statusRegisterA[0] &= ~(1<<7);\
+        }\
+    }\
+    else if(CHANNEL == 'B'){\
+        if(STATUS == 's'){\
+            chip.statusRegisterB[0] |= (1<<7);\
+        }\
+        else if(STATUS == 'c'){\
+            chip.statusRegisterB[0] &= ~(1<<7);\
+        }\
     }
-    else if(CHANNEL == 'B'){
-        if(status == 's'){
-            chip.statusRegisterB[0] |= (1<<7);
-        }
-        else if(status == 'c'){
-            chip.statusRegisterB[0] &= ~(1<<7);
-        }
-    }
-)
+
 
 // -------------------------------------------------------------------------------
 
 // --------------------- STATUS REGISTER 1 ------------------------------------------
 
 // All sent -  Status Register 1, bit 0
-#define ALL_SENT(CHANNEL, STATUS) (
-    if(CHANNEL == 'A'){
-        if(status == 's'){
-            chip.statusRegisterA[1] |= (1<<0);
-        }
-        else if(status == 'c'){
-            chip.statusRegisterA[1] &= ~(1<<0);
-        }
+#define ALL_SENT(CHANNEL, STATUS) \
+    if(CHANNEL == 'A'){\
+        if(STATUS == 's'){\
+            chip.statusRegisterA[1] |= (1<<0);\
+        }\
+        else if(STATUS == 'c'){\
+            chip.statusRegisterA[1] &= ~(1<<0);\
+        }\
+    }\
+    else if(CHANNEL == 'B'){\
+        if(STATUS == 's'){\
+            chip.statusRegisterB[1] |= (1<<0);\
+        }\
+        else if(STATUS == 'c'){\
+            chip.statusRegisterB[1] &= ~(1<<0);\
+        }\
     }
-    else if(CHANNEL == 'B'){
-        if(status == 's'){
-            chip.statusRegisterB[1] |= (1<<0);
-        }
-        else if(status == 'c'){
-            chip.statusRegisterB[1] &= ~(1<<0);
-        }
-    }
-)
+
 
 // Residue Codes - Status Register 1, bits 1-3
 // We can ignore these bits completely, since they are only used in an HDLC message :)
@@ -358,71 +358,71 @@ struct serial_chip chip;
 // Latched Bits will only be reset if a error reset command is sent, receiving new characters does not change its status
 
 // Parity Error (LATCHED) - Status Register 1, bit 4 
-#define PARITY_ERROR(CHANNEL, STATUS) (
-    if(CHANNEL == 'A'){
-        if(status == 's'){
-            chip.statusRegisterA[1] |= (1<<4);
-        }
-        else if(status == 'c'){
-            chip.statusRegisterA[1] &= ~(1<<4);
-        }
+#define PARITY_ERROR(CHANNEL, STATUS) \
+    if(CHANNEL == 'A'){\
+        if(STATUS == 's'){\
+            chip.statusRegisterA[1] |= (1<<4);\
+        }\
+        else if(STATUS == 'c'){\
+            chip.statusRegisterA[1] &= ~(1<<4);\
+        }\
+    }\
+    else if(CHANNEL == 'B'){\
+        if(STATUS == 's'){\
+            chip.statusRegisterB[1] |= (1<<4);\
+        }\
+        else if(STATUS == 'c'){\
+            chip.statusRegisterB[1] &= ~(1<<4);\
+        }\
     }
-    else if(CHANNEL == 'B'){
-        if(status == 's'){
-            chip.statusRegisterB[1] |= (1<<4);
-        }
-        else if(status == 'c'){
-            chip.statusRegisterB[1] &= ~(1<<4);
-        }
-    }
-)
+
 
 // Receiver Overrun Error (LATCHED) - Status Register 1, bit 5
 // Occurs when receiver buffer already contains 3 characters and 4th is completely received, overwriting the last character in the buffer
 
 // Likely that this will always remain at 0 in our code, since we are giving our buffers more memory, 16 characters
 
-#define RECEIVER_OVERRUN(CHANNEL, STATUS) (
-    if(CHANNEL == 'A'){
-        if(status == 's'){
-            chip.statusRegisterA[1] |= (1<<5);
-        }
-        else if(status == 'c'){
-            chip.statusRegisterA[1] &= ~(1<<5);
-        }
+#define RECEIVER_OVERRUN(CHANNEL, STATUS) \
+    if(CHANNEL == 'A'){\
+        if(STATUS == 's'){\
+            chip.statusRegisterA[1] |= (1<<5);\
+        }\
+        else if(STATUS == 'c'){\
+            chip.statusRegisterA[1] &= ~(1<<5);\
+        }\
+    }\
+    else if(CHANNEL == 'B'){\
+        if(STATUS == 's'){\
+            chip.statusRegisterB[1] |= (1<<5);\
+        }\
+        else if(STATUS == 'c'){\
+            chip.statusRegisterB[1] &= ~(1<<5);\
+        }\
     }
-    else if(CHANNEL == 'B'){
-        if(status == 's'){
-            chip.statusRegisterB[1] |= (1<<5);
-        }
-        else if(status == 'c'){
-            chip.statusRegisterB[1] &= ~(1<<5);
-        }
-    }
-)
+
 
 // CRC/Framing Error - Status Register 1, bit 6
 // CRC - Cyclic Redundancy Check
 // set when no stop bit is detected at the end of a character, when this occurs, chip waits additional one-half bit 
 // before resampling so framing error is not interpreted as new start bit
-#define CRC_ERROR(CHANNEL, STATUS) (
-    if(CHANNEL == 'A'){
-        if(status == 's'){
-            chip.statusRegisterA[1] |= (1<<6);
-        }
-        else if(status == 'c'){
-            chip.statusRegisterA[1] &= ~(1<<6);
-        }
+#define CRC_ERROR(CHANNEL, STATUS) \
+    if(CHANNEL == 'A'){\
+        if(STATUS == 's'){\
+            chip.statusRegisterA[1] |= (1<<6);\
+        }\
+        else if(STATUS == 'c'){\
+            chip.statusRegisterA[1] &= ~(1<<6);\
+        }\
+    }\
+    else if(CHANNEL == 'B'){\
+        if(STATUS == 's'){\
+            chip.statusRegisterB[1] |= (1<<6);\
+        }\
+        else if(STATUS == 'c'){\
+            chip.statusRegisterB[1] &= ~(1<<6);\
+        }\
     }
-    else if(CHANNEL == 'B'){
-        if(status == 's'){
-            chip.statusRegisterB[1] |= (1<<6);
-        }
-        else if(status == 'c'){
-            chip.statusRegisterB[1] &= ~(1<<6);
-        }
-    }
-)
+
 
 // End of HDLC Frame - Status Register 1, bit 7
 // HDLC mode, ignore
@@ -471,8 +471,8 @@ void chip_init(){
     // SR0
     RECEIVE_CHAR_AVAILABLE('A', 'c');
     RECEIVE_CHAR_AVAILABLE('B', 'c');
-    INTERRUPT_PENDING('A', 'c');
-    INTERRUPT_PENDING('A', 'c');
+    INTERRUPT_PENDING('A');
+    INTERRUPT_PENDING('A');
     TRANSMITTER_BUFFER_EMPTY('A', 's');
     TRANSMITTER_BUFFER_EMPTY('B', 's');
     SYNC_STATUS('A', 'c');
@@ -522,10 +522,10 @@ void transmit_write(char channel, char val){
 
 unsigned char transmit_read(char channel){
     if(toupper(channel) == 'A'){
-        return buffer_write(&chip.aTransmit);
+        return buffer_read(&chip.aTransmit);
     }
     else if(toupper(channel) == 'B'){
-        return buffer_write(&chip.bTransmit);
+        return buffer_read(&chip.bTransmit);
     }
     else{ // Only allowed to look at A and B channels
         printf("Invalid channel name. Use either 'A' or 'B'");
@@ -551,10 +551,10 @@ void receive_write(char channel, char val){
 
 unsigned char receive_read(char channel){
     if(toupper(channel) == 'A'){
-        return buffer_write(&chip.aReceive);
+        return buffer_read(&chip.aReceive);
     }
     else if(toupper(channel) == 'B'){
-        return buffer_write(&chip.bReceive);
+        return buffer_read(&chip.bReceive);
     }
     else{ // Only allowed to look at A and B channels
         printf("Invalid channel name. Use either 'A' or 'B'");
