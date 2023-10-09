@@ -205,18 +205,18 @@ struct serial_chip chip;
 #define DCD_STATUS(CHANNEL, STATUS) (
     if(CHANNEL == 'A'){
         if(status == 's'){
-            chip.statusRegisterA[1] |= (1<<3);
+            chip.statusRegisterA[0] |= (1<<3);
         }
         else if(status == 'c'){
-            chip.statusRegisterA[1] &= ~(1<<3);
+            chip.statusRegisterA[0] &= ~(1<<3);
         }
     }
     else if(CHANNEL == 'B'){
         if(status == 's'){
-            chip.statusRegisterB[1] |= (1<<3);
+            chip.statusRegisterB[0] |= (1<<3);
         }
         else if(status == 'c'){
-            chip.statusRegisterB[1] &= ~(1<<3);
+            chip.statusRegisterB[0] &= ~(1<<3);
         }
     }
 )
@@ -229,18 +229,18 @@ struct serial_chip chip;
 #define SYNC_STATUS(CHANNEL, STATUS) (
     if(CHANNEL == 'A'){
         if(status == 's'){
-            chip.statusRegisterA[1] |= (1<<4);
+            chip.statusRegisterA[0] |= (1<<4);
         }
         else if(status == 'c'){
-            chip.statusRegisterA[1] &= ~(1<<4);
+            chip.statusRegisterA[0] &= ~(1<<4);
         }
     }
     else if(CHANNEL == 'B'){
         if(status == 's'){
-            chip.statusRegisterB[1] |= (1<<4);
+            chip.statusRegisterB[0] |= (1<<4);
         }
         else if(status == 'c'){
-            chip.statusRegisterB[1] &= ~(1<<4);
+            chip.statusRegisterB[0] &= ~(1<<4);
         }
     }
 )
@@ -252,18 +252,18 @@ struct serial_chip chip;
 #define CTS_STATUS(CHANNEL, STATUS) (
     if(CHANNEL == 'A'){
         if(status == 's'){
-            chip.statusRegisterA[1] |= (1<<5);
+            chip.statusRegisterA[0] |= (1<<5);
         }
         else if(status == 'c'){
-            chip.statusRegisterA[1] &= ~(1<<5);
+            chip.statusRegisterA[0] &= ~(1<<5);
         }
     }
     else if(CHANNEL == 'B'){
         if(status == 's'){
-            chip.statusRegisterB[1] |= (1<<5);
+            chip.statusRegisterB[0] |= (1<<5);
         }
         else if(status == 'c'){
-            chip.statusRegisterB[1] &= ~(1<<5);
+            chip.statusRegisterB[0] &= ~(1<<5);
         }
     }
 )
@@ -280,18 +280,18 @@ struct serial_chip chip;
 #define BREAK_STATUS(CHANNEL, STATUS) (
     if(CHANNEL == 'A'){
         if(status == 's'){
-            chip.statusRegisterA[1] |= (1<<7);
+            chip.statusRegisterA[0] |= (1<<7);
         }
         else if(status == 'c'){
-            chip.statusRegisterA[1] &= ~(1<<7);
+            chip.statusRegisterA[0] &= ~(1<<7);
         }
     }
     else if(CHANNEL == 'B'){
         if(status == 's'){
-            chip.statusRegisterB[1] |= (1<<7);
+            chip.statusRegisterB[0] |= (1<<7);
         }
         else if(status == 'c'){
-            chip.statusRegisterB[1] &= ~(1<<7);
+            chip.statusRegisterB[0] &= ~(1<<7);
         }
     }
 )
@@ -300,7 +300,7 @@ struct serial_chip chip;
 
 // --------------------- STATUS REGISTER 1 ------------------------------------------
 
-// All sent -  Status Register 0, bit 1
+// All sent -  Status Register 1, bit 0
 #define ALL_SENT(CHANNEL, STATUS) (
     if(CHANNEL == 'A'){
         if(status == 's'){
@@ -320,7 +320,87 @@ struct serial_chip chip;
     }
 )
 
+// Residue Codes - Status Register 1, bits 1-3
+// We can ignore these bits completely, since they are only used in an HDLC message :)
+
+//--------------- Following bits have to do with special receive conditions, trigger an interrupt request -----------------
+
+// Latched Bits will only be reset if a error reset command is sent, receiving new characters does not change its status
+
+// Parity Error (LATCHED) - Status Register 1, bit 4 
+#define PARITY_ERROR(CHANNEL, STATUS) (
+    if(CHANNEL == 'A'){
+        if(status == 's'){
+            chip.statusRegisterA[1] |= (1<<4);
+        }
+        else if(status == 'c'){
+            chip.statusRegisterA[1] &= ~(1<<4);
+        }
+    }
+    else if(CHANNEL == 'B'){
+        if(status == 's'){
+            chip.statusRegisterB[1] |= (1<<4);
+        }
+        else if(status == 'c'){
+            chip.statusRegisterB[1] &= ~(1<<4);
+        }
+    }
+)
+
+// Receiver Overrun Error (LATCHED) - Status Register 1, bit 5
+// Occurs when receiver buffer already contains 3 characters and 4th is completely received, overwriting the last character in the buffer
+
+// Likely that this will always remain at 0 in our code, since we are giving our buffers more memory, 16 characters
+
+#define RECEIVER_OVERRUN(CHANNEL, STATUS) (
+    if(CHANNEL == 'A'){
+        if(status == 's'){
+            chip.statusRegisterA[1] |= (1<<5);
+        }
+        else if(status == 'c'){
+            chip.statusRegisterA[1] &= ~(1<<5);
+        }
+    }
+    else if(CHANNEL == 'B'){
+        if(status == 's'){
+            chip.statusRegisterB[1] |= (1<<5);
+        }
+        else if(status == 'c'){
+            chip.statusRegisterB[1] &= ~(1<<5);
+        }
+    }
+)
+
+// CRC/Framing Error - Status Register 1, bit 6
+// CRC - Cyclic Redundancy Check
+// set when no stop bit is detected at the end of a character, when this occurs, chip waits additional one-half bit 
+// before resampling so framing error is not interpreted as new start bit
+#define CRC_ERROR(CHANNEL, STATUS) (
+    if(CHANNEL == 'A'){
+        if(status == 's'){
+            chip.statusRegisterA[1] |= (1<<6);
+        }
+        else if(status == 'c'){
+            chip.statusRegisterA[1] &= ~(1<<6);
+        }
+    }
+    else if(CHANNEL == 'B'){
+        if(status == 's'){
+            chip.statusRegisterB[1] |= (1<<6);
+        }
+        else if(status == 'c'){
+            chip.statusRegisterB[1] &= ~(1<<6);
+        }
+    }
+)
+
+// End of HDLC Frame - Status Register 1, bit 7
+// HDLC mode, ignore
 // ---------------------------------------------------------------------------
+
+// ------------- STATUS REGISTER 2B (CHANNEL A DOES NOT HAVE EQUIVALENT) -----------
+
+
 
 
 // setting everything to 0
@@ -336,14 +416,32 @@ void chip_init(){
     RECEIVE_ENABLE('B', 'c');
 
     // STATUS INIT
+
+    //SR0
     RECEIVE_CHAR_AVAILABLE('A', 'c');
     RECEIVE_CHAR_AVAILABLE('B', 'c');
     INTERRUPT_PENDING('A', 'c');
     INTERRUPT_PENDING('A', 'c');
     TRANSMITTER_BUFFER_EMPTY('A', 's');
     TRANSMITTER_BUFFER_EMPTY('B', 's');
+    SYNC_STATUS('A', 'c');
+    SYNC_STATUS('B', 'c');
+    BREAK_STATUS('A', 'c');
+    BREAK_STATUS('B', 'c');
+
+    // SR1
     ALL_SENT('A', 'c');
     ALL_SENT('B', 'c');
+    RECEIVER_OVERRUN('A', 'c');
+    RECEIVER_OVERRUN('B', 'c');
+    PARITY_ERROR('A', 'c');
+    PARITY_ERROR('B', 'c');
+    RECEIVER_OVERRUN('A', 'c');
+    RECEIVER_OVERRUN('B', 'c');
+    CRC_ERROR('A', 'c');
+    CRC_ERROR('B', 'c');
+
+    // SR2
     
     unsigned int TxA_byte_count = 0;
     unsigned int TxB_byte_count = 0;
@@ -387,9 +485,11 @@ unsigned char transmit_read(char channel){
 void receive_write(char channel, char val){
     if(toupper(channel) == 'A'){
         buffer_write(&chip.aReceive, val);
+        RECEIVE_CHAR_AVAILABLE('A', 's');
     }
     else if(toupper(channel) == 'B'){
         buffer_write(&chip.bReceive, val);
+        RECEIVE_CHAR_AVAILABLE('B', 's');
     }
     else{ // Only allowed to look at A and B channels
         printf("Invalid channel name. Use either 'A' or 'B'");
