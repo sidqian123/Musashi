@@ -116,22 +116,26 @@ struct serial_chip chip;
 // Instead of having to memorize all of the bits of each of the registers, I have decided to write a bunch of macros
 // that set and clear the bits instead
 
-// ------------------------------CONTROL REGISTER MACROS ------------------------------------
-
-
 // status: can be 's' or 'c' for set and clear respectively
+
+
+// -------------------------------------------------------------------------------- CONTROL REGISTER MACROS ----------------------------------------------------------
+
+// --------------- STATUS REGISTER 3 ------------------------
+
+// Receiver Enable - Control Register 3, bit 0
 #define RECEIVE_ENABLE(CHANNEL, STATUS) (
     if(CHANNEL == 'A'){
         if(status == 's'){
-            chip.controlRegisterA[0] |= (1<<0);
+            chip.controlRegisterA[3] |= (1<<0);
         }
         else if(status == 'c'){
-            chip.controlRegisterA[0] &= ~(1<<0);
+            chip.controlRegisterA[3] &= ~(1<<0);
         }
     }
     else if(CHANNEL == 'B'){
         if(status == 's'){
-            chip.controlRegisterB[0] |= (1<<0);
+            chip.controlRegisterB[3] |= (1<<0);
         }
         else if(status == 'c'){
             chip.controlRegisterB[0] &= ~(1<<0);
@@ -139,8 +143,34 @@ struct serial_chip chip;
     }
 )
 
+// ----------------------------------------------------------
 
-// ----------------------- STATUS REGISTER MACROS --------------------------------
+// --------------- STATUS REGISTER 5 -----------------
+
+// Transmitter Enable - Status Register 5, bit 3
+
+#define TRANSMITTER_ENABLE(CHANNEL, STATUS) (
+    if(CHANNEL == 'A'){
+        if(status == 's'){
+            chip.controlRegisterA[5] |= (1<<3);
+        }
+        else if(status == 'c'){
+            chip.controlRegisterA[5] &= ~(1<<3);
+        }
+    }
+    else if(CHANNEL == 'B'){
+        if(status == 's'){
+            chip.controlRegisterB[5] |= (1<<3);
+        }
+        else if(status == 'c'){
+            chip.controlRegisterB[5] &= ~(1<<3);
+        }
+    }
+)
+
+// ---------------------------------------------------
+
+// ------------------------------------------------------------------------------ STATUS REGISTER MACROS ------------------------------------------------------------------------------------------------------------
 
 
 // ----------------------- STATUS REGISTER 0 ---------------------------------------
@@ -411,13 +441,34 @@ void chip_init(){
     buffer_init(&chip.bReceive);
     buffer_init(&chip.bTransmit);
 
-    // CONTROL INIT
+    // --------------- CONTROL INIT ----------------
+
+    // CR0
+
+
+    // CR1
+
+    
+    // CR2
+
+
+    // CR3
     RECEIVE_ENABLE('A', 'c');
     RECEIVE_ENABLE('B', 'c');
 
-    // STATUS INIT
+    // CR5
+    TRANSMITTER_ENABLE('A', 'c');
+    TRANSMITTER_ENABLE('B', 'c');
 
-    //SR0
+    // CR6
+
+
+    // CR7
+
+
+    // -------------- STATUS INIT ----------------
+
+    // SR0
     RECEIVE_CHAR_AVAILABLE('A', 'c');
     RECEIVE_CHAR_AVAILABLE('B', 'c');
     INTERRUPT_PENDING('A', 'c');
@@ -443,6 +494,8 @@ void chip_init(){
 
     // SR2
     
+
+    // SR3-4
     unsigned int TxA_byte_count = 0;
     unsigned int TxB_byte_count = 0;
 }
