@@ -23,3 +23,13 @@ Special Receive Conditions
 -Asynchronous framing error
 -Parity error
 -HDLC end of message (final flag received)
+
+Latched: once a flag is set, will remain set until manually reset by error reset command
+
+Parity Error and Receiver Overrun Error are latched
+Others are not latched, follows each character available in receiver buffer
+
+Definitions from ChapGPT
+Vectored interrupt: In a vectored interrupt system, each interrupt source is associated with a specific memory address (a vector). When an interrupt occurs, the processor uses this address to jump directly to the corresponding interrupt service routine (ISR).
+
+Nonvectored interrupt: In a non-vectored interrupt system, all interrupt requests are funneled to a single interrupt handler. The interrupt handler then needs to determine which interrupt source triggered the interrupt and execute the corresponding routine.
