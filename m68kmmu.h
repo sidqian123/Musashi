@@ -239,17 +239,23 @@ void m68881_mmu_ops(void)
 						case 2:	// MC68881 form, FD never set
 							if (modes & 0x200)
 							{
-							 	switch ((modes>>10) & 7)
+							 	switch ((modes>>10) & 31)
 								{
-									case 0:	// translation control register
+									case 2: //tt0
+										fprintf(stdout,"680x0: PMOVE from %%tt0 PC %x STUB\n", modes, REG_PC);
+										break;
+									case 3: //tt1
+										fprintf(stdout,"680x0: PMOVE from %%tt1 PC %x STUB\n", modes, REG_PC);
+										break;
+									case 16:	// translation control register
 										WRITE_EA_32(ea, m68ki_cpu.mmu_tc);
 										break;
 
-									case 2: // supervisor root pointer
+									case 18: // supervisor root pointer
 										WRITE_EA_64(ea, (uint64)m68ki_cpu.mmu_srp_limit<<32 | (uint64)m68ki_cpu.mmu_srp_aptr);
 										break;
 
-									case 3: // CPU root pointer
+									case 19: // CPU root pointer
 										WRITE_EA_64(ea, (uint64)m68ki_cpu.mmu_crp_limit<<32 | (uint64)m68ki_cpu.mmu_crp_aptr);
 										break;
 
@@ -260,9 +266,17 @@ void m68881_mmu_ops(void)
 							}
 							else
 							{
-							 	switch ((modes>>10) & 7)
+								switch ((modes>>10) & 31)
 								{
-									case 0:	// translation control register
+									
+									case 2: //tt0
+										fprintf(stdout,"680x0: PMOVE MMU modes: %04x, to %%tt0 PC %x STUB\n", modes, REG_PC);
+										break;
+									case 3: //tt1
+										fprintf(stdout,"680x0: PMOVE MMU modes: %04x, to %%tt1 PC %x STUB\n", modes, REG_PC);
+										break;
+									case 16:	// translation control register
+										fprintf(stdout,"680x0: PMOVE MMU modes: %04x, to %%tc PC %x\n", modes, REG_PC);
 										m68ki_cpu.mmu_tc = READ_EA_32(ea);
 
 										if (m68ki_cpu.mmu_tc & 0x80000000)
@@ -275,20 +289,22 @@ void m68881_mmu_ops(void)
 										}
 										break;
 
-									case 2:	// supervisor root pointer
+									case 18:	// supervisor root pointer
+										fprintf(stdout,"680x0: PMOVE MMU modes: %04x, to %%srp PC %x\n", modes, REG_PC);
 										temp64 = READ_EA_64(ea);
 										m68ki_cpu.mmu_srp_limit = (temp64>>32) & 0xffffffff;
 										m68ki_cpu.mmu_srp_aptr = temp64 & 0xffffffff;
 										break;
 
-									case 3:	// CPU root pointer
+									case 19:	// CPU root pointer
+										fprintf(stdout,"680x0: PMOVE MMU modes: %04x, to %%crp PC %x\n", modes, REG_PC);
 										temp64 = READ_EA_64(ea);
 										m68ki_cpu.mmu_crp_limit = (temp64>>32) & 0xffffffff;
 										m68ki_cpu.mmu_crp_aptr = temp64 & 0xffffffff;
 										break;
 
 									default:
-										fprintf(stderr,"680x0: PMOVE to unknown MMU register %x, PC %x\n", (modes>>10) & 7, REG_PC);
+										fprintf(stdout,"680x0: PMOVE to unknown MMU register %x, PC %x\n", (modes>>10) & 31, REG_PC);
 										break;
 								}
 							}
