@@ -166,7 +166,7 @@ uint pmmu_translate_addr(uint addr_in)
 	}
 
 
-//	fprintf(stderr,"PMMU: [%08x] => [%08x]\n", addr_in, addr_out);
+	fprintf(stdout,"PMMU: [%08x] => [%08x]\n", addr_in, addr_out);
 
 	return addr_out;
 }
