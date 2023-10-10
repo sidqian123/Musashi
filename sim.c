@@ -65,6 +65,10 @@ struct section {
 void instruction_hook(unsigned int pc)
 {
     printf("Now executing PC vvv: %08x\n", pc);
+    if(pc == 70294)
+    {
+      printf("Starting pmap_kenter_pa()\n");
+    }
    // unsigned int r = m68k_get_reg(NULL, M68K_REG_SRP);
     // printf("Current value of D2: %08x\n",r);
 }
