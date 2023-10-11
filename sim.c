@@ -65,7 +65,7 @@ struct section {
 void instruction_hook(unsigned int pc)
 {
     printf("Now executing PC vvv: %08x\n", pc);
-   // unsigned int r = m68k_get_reg(NULL, M68K_REG_SRP);
+   // unsigned int r = m68k_get_reg(NULL, M68K_REG_D2);
     // printf("Current value of D2: %08x\n",r);
 }
 

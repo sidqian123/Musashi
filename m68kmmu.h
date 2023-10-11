@@ -19,6 +19,7 @@ uint pmmu_translate_addr(uint addr_in)
 	resolved = 0;
 	addr_out = addr_in;
 
+
 	// if SRP is enabled and we're in supervisor mode, use it
 	if ((m68ki_cpu.mmu_tc & 0x02000000) && (m68ki_get_sr() & 0x2000))
 	{
@@ -166,7 +167,7 @@ uint pmmu_translate_addr(uint addr_in)
 	}
 
 
-//	fprintf(stderr,"PMMU: [%08x] => [%08x]\n", addr_in, addr_out);
+	fprintf(stdout,"PMMU: [%08x] => [%08x]\n", addr_in, addr_out);
 
 	return addr_out;
 }

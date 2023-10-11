@@ -1,9 +1,7 @@
-# Just a basic makefile to quickly test that everyting is working, it just
-# compiles the .o and the generator
-EXENAME          = sim
+EXENAME = sim
 
 MUSASHIFILES = m68kcpu.c m68kdasm.c softfloat/softfloat.c
-MAINFILES        = sim.c
+MAINFILES = sim.c
 MUSASHIGENCFILES = m68kops.c
 MUSASHIGENHFILES = m68kops.h
 MUSASHIGENERATOR = m68kmake
@@ -11,29 +9,34 @@ MUSASHIGENERATOR = m68kmake
 EXE =
 EXEPATH = ./
 
-.CFILES   = $(MAINFILES) $(OSDFILES) $(MUSASHIFILES) $(MUSASHIGENCFILES)
-.OFILES   = $(.CFILES:%.c=%.o)
+CFILES = $(MAINFILES) $(MUSASHIFILES) $(MUSASHIGENCFILES)
+OFILES = $(CFILES:.c=.o)
+DFILES = $(CFILES:.c=.d)
 
-CC        = gcc
-WARNINGS  = -Wall -Wextra -pedantic
-CFLAGS    = $(WARNINGS) -g -O0
-LFLAGS    = $(WARNINGS)
+CC = gcc
+WARNINGS = -Wall -Wextra -pedantic
+CFLAGS = $(WARNINGS) -g -O0
+LFLAGS = $(WARNINGS)
 
 TARGET = $(EXENAME)$(EXE)
-DELETEFILES = $(MUSASHIGENCFILES) $(MUSASHIGENHFILES) $(.OFILES) $(TARGET) $(MUSASHIGENERATOR)$(EXE)
-
+DELETEFILES = $(OFILES) $(TARGET) $(MUSASHIGENERATOR)$(EXE) $(DFILES)
 
 all: $(TARGET)
 
 clean:
 	rm -f $(DELETEFILES)
 
-$(TARGET): $(MUSASHIGENHFILES) $(.OFILES) Makefile
-	$(CC) -o $@ $(.OFILES) $(LFLAGS) -lm
+$(TARGET): $(OFILES) Makefile
+	$(CC) -o $@ $(OFILES) $(LFLAGS) -lm
 
+$(OFILES): %.o: %.c
+	$(CC) $(CFLAGS) -MM -MF $(@:.o=.d) -MT $@ $<
+	$(CC) $(CFLAGS) -c $< -o $@
 
 $(MUSASHIGENCFILES) $(MUSASHIGENHFILES): $(MUSASHIGENERATOR)$(EXE)
 	$(EXEPATH)$(MUSASHIGENERATOR)$(EXE)
 
-$(MUSASHIGENERATOR)$(EXE):  $(MUSASHIGENERATOR).c
-	$(CC) -o  $(MUSASHIGENERATOR)$(EXE)  $(MUSASHIGENERATOR).c
+$(MUSASHIGENERATOR)$(EXE): $(MUSASHIGENERATOR).c
+	$(CC) -o $(MUSASHIGENERATOR)$(EXE) $(MUSASHIGENERATOR).c
+
+-include $(DFILES)
