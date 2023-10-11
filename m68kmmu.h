@@ -18,8 +18,11 @@ uint pmmu_translate_addr(uint addr_in)
 
 	resolved = 0;
 	addr_out = addr_in;
-
-
+	if(addr_in == 0x26e000)
+	{
+		printf("addr_in == MSGBUF_ADDR\n");
+		
+	}
 	// if SRP is enabled and we're in supervisor mode, use it
 	if ((m68ki_cpu.mmu_tc & 0x02000000) && (m68ki_get_sr() & 0x2000))
 	{
