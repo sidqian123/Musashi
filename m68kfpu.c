@@ -1668,6 +1668,7 @@ void m68040_fpu_op1()
 		{
 			switch (mode)
 			{
+				case 2:
 				case 3:	// (An)+
 		    			addr = EA_AY_PI_32();
 
