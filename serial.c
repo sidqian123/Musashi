@@ -385,6 +385,67 @@ struct serial_chip chip;
 
 // ----------------------------------------------------------
 
+// ------------------ CONTROL REGISTER 4 ----------------
+
+// setting this bit to one adds an extra bit contianing parity information - Control Register 4, bit 0
+#define  PARITY_ENABLE(CHANNEL, STATUS)
+    if(CHANNEL == 'A'){\
+        if(STATUS == 's'){\
+            chip.controlRegisterA[4] |= (1<<0);\
+        }\
+        else if(STATUS == 'c'){\
+            chip.controlRegisterA[4] &= ~(1<<0);\
+        }\
+    }\
+    else if(CHANNEL == 'B'){\
+        if(STATUS == 's'){\
+            chip.controlRegisterB[4] |= (1<<0);\
+        }\
+        else if(STATUS == 'c'){\
+            chip.controlRegisterB[4] &= ~(1<<0);\
+        }\
+    }
+
+// setting this bit to one enables parity checking - Control Register 4, bit 1
+#define PARITY_ODD_OR_EVEN(CHANNEL, STATUS)\
+    // Programming a zero into this bit when parity is enabled selects odd parity for the received character.
+    // Conversely, a one in this bit selects even parity generation and checking.
+    if(CHANNEL == 'A'){\
+        if(STATUS == 's'){\
+            chip.controlRegisterA[4] |= (1<<1);\
+        }\
+        else if(STATUS == 'c'){\
+            chip.controlRegisterA[4] &= ~(1<<1);\
+        }\
+    }\
+    else if(CHANNEL == 'B'){\
+        if(STATUS == 's'){\
+            chip.controlRegisterB[4] |= (1<<1);\
+        }\
+        else if(STATUS == 'c'){\
+            chip.controlRegisterB[4] &= ~(1<<1);\
+        }\
+    }
+
+// Control Register 4, bit 2 and 3
+// In an asynchronous mode, this field specifies the number of bit times used as the stop bit length by the trans- mitter.
+#define STOP_BITS(CHANNEL, NUMBER)\
+    if(CHANNEL == 'A'){ \
+        chip.controlRegisterA[4] &= ~(1<<2); \
+        chip.controlRegisterA[4] |= (NUMBER<<2); \
+    }
+    else if(CHANNEL == 'B'){ \
+        chip.controlRegisterB[4] &= ~(1<<2); \
+        chip.controlRegisterB[4] |= (NUMBER<<2); \
+    }\
+
+
+// Control Register 4, bit 4 and 5 ignored in asynchronous mode
+// Control Register 4, bit 6 and 7 deal with clocks ignored?
+
+
+// --------------------------------------------------------
+
 // --------------- CONTROL REGISTER 5 -----------------
 
 // Transmitter Enable - Control Register 5, bit 3
@@ -409,6 +470,68 @@ struct serial_chip chip;
 
 
 // ---------------------------------------------------
+
+// ------------------ CONTROL REGISTER 6 ----------------
+
+/*
+Sync byte 1 is used in the following modes:
+Monosync 
+8-bit sync character transmitted during the idle phase
+Bisync
+Least significant (first) 8 bits of the
+16-bit transmit and receive sync character
+External Sync 
+Sync character transmitted during the idle phase
+HDLC 
+Secondary address value matched to secondary address field of the HDLC
+frame when the MPSCC is in the address search mode
+*/
+#define SET_SYNC_BYTE_1_MODE(CHANNEL, MODE) \ //ask goodney about this one confused on how to set each bit
+if ((CHANNEL) == 'A') { \
+    if ((MODE) == "Monosync") { \
+        chip.controlRegisterA[6] |= (1 << D0_BIT_POSITION); \
+    } else if ((MODE) == "Bisync") { \
+        chip.controlRegisterA[6] |= (1 << D1_BIT_POSITION); \
+    } else if ((MODE) == "External Sync") { \
+        chip.controlRegisterA[6] |= (1 << D2_BIT_POSITION); \
+    }\
+} else if ((CHANNEL) == 'B') { \
+    if ((MODE) == "Monosync") { \
+        chip.controlRegisterB[6] |= (1 << D0_BIT_POSITION); \
+    } else if ((MODE) == "Bisync") { \
+        chip.controlRegisterB[6] |= (1 << D1_BIT_POSITION); \
+    } else if ((MODE) == "External Sync") { \
+        chip.controlRegisterB[6] |= (1 << D2_BIT_POSITION); \
+    }\
+}
+ 
+
+// --------------------------------------------------------
+
+// ------------------ CONTROL REGISTER 7 ----------------
+
+#define SET_SYNC_BYTE_2_MODE(CHANNEL, MODE) \ //ask goodney about this one confused on how to set each bit
+if ((CHANNEL) == 'A') { \
+    if ((MODE) == "Monosync") { \
+        chip.controlRegisterA[7] |= (1 << D0_BIT_POSITION); \
+    } else if ((MODE) == "Bisync") { \
+        chip.controlRegisterA[7] |= (1 << D1_BIT_POSITION); \
+    } else if ((MODE) == "HOLC") { \
+        chip.controlRegisterA[7] |= (1 << D2_BIT_POSITION); \
+    } \
+} else if ((CHANNEL) == 'B') { \
+    if ((MODE) == "Monosync") { \
+        chip.controlRegisterB[7] |= (1 << D0_BIT_POSITION); \
+    } else if ((MODE) == "Bisync") { \
+        chip.controlRegisterB[7] |= (1 << D1_BIT_POSITION); \
+    } else if ((MODE) == "HOLC") { \
+        chip.controlRegisterB[7] |= (1 << D2_BIT_POSITION); \
+    } \
+}
+
+
+
+// --------------------------------------------------------
 
 // ------------------------------------------------------------------------------ STATUS REGISTER MACROS ------------------------------------------------------------------------------------------------------------
 
@@ -735,9 +858,12 @@ void chip_init(){
     TRANSMITTER_ENABLE('B', 'c');
 
     // CR6
-
+    SET_SYNC_BYTE_1_MODE('A', "Monosync"); // ????
+    SET_SYNC_BYTE_1_MODE('B', "Monosync"); // ????
 
     // CR7
+    SET_SYNC_BYTE_2_MODE('A', "Monosync"); // ????
+    SET_SYNC_BYTE_2_MODE('B', "Monosync"); // ????
 
 
     // -------------- STATUS INIT ----------------
