@@ -985,6 +985,8 @@ typedef struct
 	uint mmu_srp_aptr, mmu_srp_limit;
 	uint mmu_tc;
 	uint16 mmu_sr;
+    uint mmu_tt0;
+    uint mmu_tt1;
 
 	const uint8* cyc_instruction;
 	const uint8* cyc_exception;
