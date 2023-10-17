@@ -21,6 +21,7 @@ Thumbs.db
 
 # Make output
 *.o
+*.d
 m68kmake
 m68kops.?
 sim
