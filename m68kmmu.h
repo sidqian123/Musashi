@@ -18,6 +18,12 @@ uint pmmu_translate_addr(uint addr_in)
 
 	resolved = 0;
 	addr_out = addr_in;
+    if(m68ki_cpu.mmu_tt0_switch && (addr_in >= m68ki_cpu.mmu_tt0_base && addr_in <= m68ki_cpu.mmu_tt0_max)){
+        return addr_in;
+    }
+    if(m68ki_cpu.mmu_tt1_switch && (addr_in >= m68ki_cpu.mmu_tt1_base && addr_in <= m68ki_cpu.mmu_tt1_max)){
+        return addr_in;
+    }
 	if(addr_in == 0x26e000)
 	{
 		printf("addr_in == MSGBUF_ADDR\n");
@@ -246,9 +252,17 @@ void m68881_mmu_ops(void)
 							 	switch ((modes>>10) & 31)
 								{
 									case 2: //tt0
+                                        WRITE_EA_32(ea, m68ki_cpu.mmu_tt0);
+                                        m68ki_cpu.mmu_tt0_base = m68ki_cpu.mmu_tt0 & 0xFF000000;
+                                        m68ki_cpu.mmu_tt0_max = (m68ki_cpu.mmu_tt0 & 0xFF000000) | ((m68ki_cpu.mmu_tt0 & 0x00FF0000) << 8 | 0x00FFFFFF);
+                                        m68ki_cpu.mmu_tt0_switch = (m68ki_cpu.mmu_tt0 & 0x00008000) >> 15;
 										fprintf(stdout,"680x0: PMOVE from %%tt0 PC %x STUB\n", modes, REG_PC);
 										break;
 									case 3: //tt1
+                                        WRITE_EA_32(ea, m68ki_cpu.mmu_tt1);
+                                        m68ki_cpu.mmu_tt1_base = m68ki_cpu.mmu_tt0 & 0xFF000000;
+                                        m68ki_cpu.mmu_tt1_max = (m68ki_cpu.mmu_tt0 & 0xFF000000) | ((m68ki_cpu.mmu_tt0 & 0x00FF0000) << 8 | 0x00FFFFFF);
+                                        m68ki_cpu.mmu_tt1_switch = (m68ki_cpu.mmu_tt0 & 0x00008000) >> 15;
 										fprintf(stdout,"680x0: PMOVE from %%tt1 PC %x STUB\n", modes, REG_PC);
 										break;
 									case 16:	// translation control register

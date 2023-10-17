@@ -988,6 +988,10 @@ typedef struct
     uint mmu_tt0;
     uint mmu_tt1;
 
+    /* TTx Range and Valid bits */
+    uint mmu_tt0_base, mmu_tt0_max, mmu_tt0_switch;
+    uint mmu_tt1_base, mmu_tt1_max, mmu_tt1_switch;
+
 	const uint8* cyc_instruction;
 	const uint8* cyc_exception;
 
