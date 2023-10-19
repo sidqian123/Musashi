@@ -197,6 +197,7 @@ void m68881_mmu_ops(void)
 	uint16 modes;
 	uint32 ea = m68ki_cpu.ir & 0x3f;
 	uint64 temp64;
+	uint32 temp32;
 
 	// catch the 2 "weird" encodings up front (PBcc)
 	if ((m68ki_cpu.ir & 0xffc0) == 0xf0c0)
@@ -258,16 +259,10 @@ void m68881_mmu_ops(void)
 								{
 									case 2: //tt0
                                         WRITE_EA_32(ea, m68ki_cpu.mmu_tt0);
-                                        m68ki_cpu.mmu_tt0_base = m68ki_cpu.mmu_tt0 & 0xFF000000;
-                                        m68ki_cpu.mmu_tt0_max = (m68ki_cpu.mmu_tt0 & 0xFF000000) | ((m68ki_cpu.mmu_tt0 & 0x00FF0000) << 8 | 0x00FFFFFF);
-                                        m68ki_cpu.mmu_tt0_switch = (m68ki_cpu.mmu_tt0 & 0x00008000) >> 15;
 										fprintf(stdout,"680x0: PMOVE from %%tt0 PC %x STUB\n", modes, REG_PC);
 										break;
 									case 3: //tt1
                                         WRITE_EA_32(ea, m68ki_cpu.mmu_tt1);
-                                        m68ki_cpu.mmu_tt1_base = m68ki_cpu.mmu_tt0 & 0xFF000000;
-                                        m68ki_cpu.mmu_tt1_max = (m68ki_cpu.mmu_tt0 & 0xFF000000) | ((m68ki_cpu.mmu_tt0 & 0x00FF0000) << 8 | 0x00FFFFFF);
-                                        m68ki_cpu.mmu_tt1_switch = (m68ki_cpu.mmu_tt0 & 0x00008000) >> 15;
 										fprintf(stdout,"680x0: PMOVE from %%tt1 PC %x STUB\n", modes, REG_PC);
 										break;
 									case 16:	// translation control register
@@ -293,9 +288,17 @@ void m68881_mmu_ops(void)
 								{
 									
 									case 2: //tt0
+										m68ki_cpu.mmu_tt0 = READ_EA_32(ea);
+										m68ki_cpu.mmu_tt0_base = m68ki_cpu.mmu_tt0 & 0xFF000000;
+										m68ki_cpu.mmu_tt0_max = (m68ki_cpu.mmu_tt0 & 0xFF000000) | ((m68ki_cpu.mmu_tt0 & 0x00FF0000) << 8 | 0x00FFFFFF);
+										m68ki_cpu.mmu_tt0_switch = (m68ki_cpu.mmu_tt0 & 0x00008000) >> 15;
 										fprintf(stdout,"680x0: PMOVE MMU modes: %04x, to %%tt0 PC %x STUB\n", modes, REG_PC);
 										break;
 									case 3: //tt1
+										m68ki_cpu.mmu_tt1 = READ_EA_32(ea);
+										m68ki_cpu.mmu_tt1_base = m68ki_cpu.mmu_tt0 & 0xFF000000;
+										m68ki_cpu.mmu_tt1_max = (m68ki_cpu.mmu_tt0 & 0xFF000000) | ((m68ki_cpu.mmu_tt0 & 0x00FF0000) << 8 | 0x00FFFFFF);
+										m68ki_cpu.mmu_tt1_switch = (m68ki_cpu.mmu_tt0 & 0x00008000) >> 15;
 										fprintf(stdout,"680x0: PMOVE MMU modes: %04x, to %%tt1 PC %x STUB\n", modes, REG_PC);
 										break;
 									case 16:	// translation control register
