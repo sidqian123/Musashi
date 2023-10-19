@@ -12,8 +12,8 @@
 */
 uint pmmu_translate_addr(uint addr_in)
 {
-	uint32 addr_out, tbl_entry = 0, tbl_entry2, tamode = 0, tbmode = 0, tcmode = 0;
-	uint root_aptr, root_limit, tofs, is, abits, bbits, cbits;
+	uint32 addr_out, tbl_entry = 0, tbl_entry2, tamode = 0, tbmode = 0, tcmode = 0, psmask;
+	uint root_aptr, root_limit, tofs, is, abits, bbits, cbits, psbits;
 	uint resolved, tptr, shift;
 
 	resolved = 0;
@@ -46,8 +46,10 @@ uint pmmu_translate_addr(uint addr_in)
 	abits = (m68ki_cpu.mmu_tc>>12)&0xf;
 	bbits = (m68ki_cpu.mmu_tc>>8)&0xf;
 	cbits = (m68ki_cpu.mmu_tc>>4)&0xf;
-
-	fprintf(stdout,"PMMU: tcr %08x limit %08x aptr %08x is %x abits %d bbits %d cbits %d\n", m68ki_cpu.mmu_tc, root_limit, root_aptr, is, abits, bbits, cbits);
+	psbits = (m68ki_cpu.mmu_tc>>20) & 0xf;	
+	psmask = 0xffffffff << psbits;
+	
+	fprintf(stdout,"PMMU: tcr %08x limit %08x aptr %08x is %x abits %d bbits %d cbits %d psbits %d psmask %x\n", m68ki_cpu.mmu_tc, root_limit, root_aptr, is, abits, bbits, cbits, psbits, psmask);
 
 	// get table A offset
 	tofs = (addr_in<<is)>>(32-abits);
@@ -110,7 +112,7 @@ uint pmmu_translate_addr(uint addr_in)
 			tbl_entry &= 0xffffff00;
 
 			shift = is+abits;
-			addr_out = ((addr_in<<shift)>>shift) + tbl_entry;
+			addr_out = ((addr_in<<shift)>>shift) + (tbl_entry & psmask);
 			resolved = 1;
 			break;
 	}
@@ -149,7 +151,7 @@ uint pmmu_translate_addr(uint addr_in)
 				tbl_entry &= 0xffffff00;
 
 				shift = is+abits+bbits;
-				addr_out = ((addr_in<<shift)>>shift) + tbl_entry;
+				addr_out = ((addr_in<<shift)>>shift) + (tbl_entry & psmask);
 				resolved = 1;
 				break;
 		}
@@ -169,7 +171,7 @@ uint pmmu_translate_addr(uint addr_in)
 				tbl_entry &= 0xffffff00;
 
 				shift = is+abits+bbits+cbits;
-				addr_out = ((addr_in<<shift)>>shift) + tbl_entry;
+				addr_out = ((addr_in<<shift)>>shift) + (tbl_entry & psmask);
 				resolved = 1;
 				break;
 		}
