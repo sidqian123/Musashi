@@ -179,7 +179,7 @@ uint pmmu_translate_addr(uint addr_in)
 
 
 	fprintf(stdout,"PMMU: [%08x] => [%08x] \ntt0 ON [%08x]: tt0 range: [%08x] <=> [%08x] "
-                   "\ntt1 ON [%08x]: tt0 range: [%08x] <=> [%08x]  \n",
+                   "\ntt1 ON [%08x]: tt1 range: [%08x] <=> [%08x]  \n",
             addr_in, addr_out, m68ki_cpu.mmu_tt0_switch, m68ki_cpu.mmu_tt0_base, m68ki_cpu.mmu_tt0_max,
             m68ki_cpu.mmu_tt1_switch, m68ki_cpu.mmu_tt1_base, m68ki_cpu.mmu_tt1_max);
 
