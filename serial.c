@@ -473,61 +473,14 @@ struct serial_chip chip;
 
 // ------------------ CONTROL REGISTER 6 ----------------
 
-/*
-Sync byte 1 is used in the following modes:
-Monosync 
-8-bit sync character transmitted during the idle phase
-Bisync
-Least significant (first) 8 bits of the
-16-bit transmit and receive sync character
-External Sync 
-Sync character transmitted during the idle phase
-HDLC 
-Secondary address value matched to secondary address field of the HDLC
-frame when the MPSCC is in the address search mode
-*/
-#define SET_SYNC_BYTE_1_MODE(CHANNEL, MODE) \ //ask goodney about this one confused on how to set each bit
-if ((CHANNEL) == 'A') { \
-    if ((MODE) == "Monosync") { \
-        chip.controlRegisterA[6] |= (1 << D0_BIT_POSITION); \
-    } else if ((MODE) == "Bisync") { \
-        chip.controlRegisterA[6] |= (1 << D1_BIT_POSITION); \
-    } else if ((MODE) == "External Sync") { \
-        chip.controlRegisterA[6] |= (1 << D2_BIT_POSITION); \
-    }\
-} else if ((CHANNEL) == 'B') { \
-    if ((MODE) == "Monosync") { \
-        chip.controlRegisterB[6] |= (1 << D0_BIT_POSITION); \
-    } else if ((MODE) == "Bisync") { \
-        chip.controlRegisterB[6] |= (1 << D1_BIT_POSITION); \
-    } else if ((MODE) == "External Sync") { \
-        chip.controlRegisterB[6] |= (1 << D2_BIT_POSITION); \
-    }\
-}
+// not working with these modes so ignore
  
 
 // --------------------------------------------------------
 
 // ------------------ CONTROL REGISTER 7 ----------------
 
-#define SET_SYNC_BYTE_2_MODE(CHANNEL, MODE) \ //ask goodney about this one confused on how to set each bit
-if ((CHANNEL) == 'A') { \
-    if ((MODE) == "Monosync") { \
-        chip.controlRegisterA[7] |= (1 << D0_BIT_POSITION); \
-    } else if ((MODE) == "Bisync") { \
-        chip.controlRegisterA[7] |= (1 << D1_BIT_POSITION); \
-    } else if ((MODE) == "HOLC") { \
-        chip.controlRegisterA[7] |= (1 << D2_BIT_POSITION); \
-    } \
-} else if ((CHANNEL) == 'B') { \
-    if ((MODE) == "Monosync") { \
-        chip.controlRegisterB[7] |= (1 << D0_BIT_POSITION); \
-    } else if ((MODE) == "Bisync") { \
-        chip.controlRegisterB[7] |= (1 << D1_BIT_POSITION); \
-    } else if ((MODE) == "HOLC") { \
-        chip.controlRegisterB[7] |= (1 << D2_BIT_POSITION); \
-    } \
-}
+// not working with these modes so ignore
 
 
 
@@ -858,13 +811,12 @@ void chip_init(){
     TRANSMITTER_ENABLE('B', 'c');
 
     // CR6
-    SET_SYNC_BYTE_1_MODE('A', "Monosync"); // ????
-    SET_SYNC_BYTE_1_MODE('B', "Monosync"); // ????
+    chip.controlRegisterA[6] = 0; // no sync modes so set to 0 and no need to touch again
+    chip.controlRegisterB[6] = 0;
 
     // CR7
-    SET_SYNC_BYTE_2_MODE('A', "Monosync"); // ????
-    SET_SYNC_BYTE_2_MODE('B', "Monosync"); // ????
-
+    chip.controlRegisterA[7] = 0; // no sync modes so set to 0 and no need to touch again
+    chip.controlRegisterB[7] = 0;
 
     // -------------- STATUS INIT ----------------
 
