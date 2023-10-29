@@ -61,6 +61,12 @@ struct section {
     unsigned int size;
 };
 
+/* PIOs */
+unsigned int OBIO_PIO0A	= 0x00;	/* PIO-0 port A */
+unsigned int OBIO_PIO0B	= 0x00;	/* PIO-0 port B */
+unsigned int OBIO_PIO0C	= 0x00;	/* PIO-0 port C*/
+unsigned int OBIO_PIO0	= 0x00;	/* PIO-0 control */
+
 /* track instruction execution */
 void instruction_hook(unsigned int pc)
 {
@@ -121,9 +127,67 @@ void exit_error(char* fmt, ...)
     exit(EXIT_FAILURE);
 }
 
+/* return PIO port define */
+unsigned int obio_pio_port(unsigned int address) {
+    switch (address) {
+        case 0x49000000:
+            printf("Read OBIO_PIO0A\n");
+            return OBIO_PIO0A;
+        case 0x49000001:
+            printf("Read OBIO_PIO0B\n");
+            return OBIO_PIO0B;
+        case 0x49000002:
+            printf("Read OBIO_PIO0C\n");
+            return OBIO_PIO0C;
+        case 0x49000003:
+            printf("Read OBIO_PIO0 Control\n");
+            return OBIO_PIO0;
+        default:
+            exit_error("Invalid OBIO PIO port address %08x\n", address);
+    }
+}
+
+/* write PIO port define */
+void obio_pio_port_write(unsigned int address, unsigned int value) {
+    switch (address) {
+        case 0x49000000:
+            printf("Write OBIO_PIO0A\n");
+            OBIO_PIO0A = value;
+            break;
+        case 0x49000001:
+            printf("Write OBIO_PIO0B\n");
+            OBIO_PIO0B = value;
+            break;
+        case 0x49000002:
+            printf("Write OBIO_PIO0C\n");
+            OBIO_PIO0C = value;
+            break;
+        case 0x49000003:
+            printf("Write OBIO_PIO0 Control\n");
+            OBIO_PIO0 = value;
+            break;
+        default:
+            exit_error("Invalid OBIO PIO port address %08x\n", address);
+    }
+}
+
+/* check if it is requesting OBIO PIO port */
+int obio_pio_port_check(unsigned int address) {
+    switch (address) {
+        case 0x49000000:
+        case 0x49000001:
+        case 0x49000002:
+        case 0x49000003:
+            return 1;
+        default:
+            return 0;
+    }
+}
+
 /* reads in 8 bits from memory array */
 unsigned int m68k_read_memory_8(unsigned int address) {
-    if (address >= MAX_MEM) {
+    if(obio_pio_port_check(address)) return obio_pio_port(address);
+    else if (address >= MAX_MEM) {
         if (address >= BOOTARG_START && address <= BOOTARG_END) {
             return bootarg[address - BOOTARG_START];
         }
@@ -135,7 +199,8 @@ unsigned int m68k_read_memory_8(unsigned int address) {
 
 /* reads in 16 bits from memory array */
 unsigned int m68k_read_memory_16(unsigned int address) {
-    if (address >= MAX_MEM) {
+    if(obio_pio_port_check(address)) return obio_pio_port(address);
+    else if (address >= MAX_MEM) {
         exit_error("Attempted to read byte(read_16) from address %08x beyond memory size\n", address);
     }
     data_bus_recorder("m68k_read_memory_16", address, 2);
@@ -144,8 +209,8 @@ unsigned int m68k_read_memory_16(unsigned int address) {
 
 /* reads in 32 bits from memory array */
 unsigned int m68k_read_memory_32(unsigned int address) {
-    
-    if (address >= MAX_MEM) {
+    if(obio_pio_port_check(address)) return obio_pio_port(address);
+    else if (address >= MAX_MEM) {
         if(address == MEMAVAIL_ADDRESS) {
             printf("Read 32 from MEMAVAIL_ADDRESS (%08x) value: %08x\n",MEMAVAIL_ADDRESS, MEMAVAIL_VALUE_ADDRESS);
             return MEMAVAIL_VALUE_ADDRESS;
@@ -174,6 +239,10 @@ unsigned int m68k_read_memory_32(unsigned int address) {
 
 /* write in 8 bits to memory array */
 void m68k_write_memory_8(unsigned int address, unsigned int value) {
+    if(obio_pio_port_check(address)) {
+        obio_pio_port_write(address, value);
+        return;
+    }
     if (address > MAX_MEM) {
         exit_error("Attempted to write byte to address %08x beyond memory size\n", address);
     }
@@ -187,6 +256,10 @@ void m68k_write_memory_8(unsigned int address, unsigned int value) {
 
 /* write in 16 bits to memory array */
 void m68k_write_memory_16(unsigned int address, unsigned int value) {
+    if(obio_pio_port_check(address)) {
+        obio_pio_port_write(address, value);
+        return;
+    }
     if (address > MAX_MEM) {
         exit_error("Attempted to write byte to address %08x beyond memory size\n", address);
     }
@@ -200,6 +273,10 @@ void m68k_write_memory_16(unsigned int address, unsigned int value) {
 
 /* write in 32 bits to memory array */
 void m68k_write_memory_32(unsigned int address, unsigned int value) {
+    if(obio_pio_port_check(address)) {
+        obio_pio_port_write(address, value);
+        return;
+    }
     if (address > MAX_MEM) {
         exit_error("Attempted to write byte to address %08x beyond memory size\n", address);
     }
