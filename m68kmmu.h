@@ -296,9 +296,9 @@ void m68881_mmu_ops(void)
 										break;
 									case 3: //tt1
 										m68ki_cpu.mmu_tt1 = READ_EA_32(ea);
-										m68ki_cpu.mmu_tt1_base = m68ki_cpu.mmu_tt0 & 0xFF000000;
-										m68ki_cpu.mmu_tt1_max = (m68ki_cpu.mmu_tt0 & 0xFF000000) | ((m68ki_cpu.mmu_tt0 & 0x00FF0000) << 8 | 0x00FFFFFF);
-										m68ki_cpu.mmu_tt1_switch = (m68ki_cpu.mmu_tt0 & 0x00008000) >> 15;
+										m68ki_cpu.mmu_tt1_base = m68ki_cpu.mmu_tt1 & 0xFF000000;
+										m68ki_cpu.mmu_tt1_max = (m68ki_cpu.mmu_tt1 & 0xFF000000) | ((m68ki_cpu.mmu_tt1 & 0x00FF0000) << 8 | 0x00FFFFFF);
+										m68ki_cpu.mmu_tt1_switch = (m68ki_cpu.mmu_tt1 & 0x00008000) >> 15;
 										fprintf(stdout,"680x0: PMOVE MMU modes: %04x, to %%tt1 PC %x STUB\n", modes, REG_PC);
 										break;
 									case 16:	// translation control register
