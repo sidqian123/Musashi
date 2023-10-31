@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <string.h>
 
 
 #define MAX_ROM 0xfff                           /* Memory size for rom */
@@ -127,6 +128,75 @@ void exit_error(char* fmt, ...)
     exit(EXIT_FAILURE);
 }
 
+
+//portA data 51000000 (2 occurances)
+//portA command 51000005 (0)
+//t)
+//portB command 51000006 (2)
+//two string to store portA and portB
+//when read return null
+//use unsigned int to store data
+char port_A_data[100], port_B_data[100],port_A_command[100],port_B_command[100];
+
+void append_to_string(char *dest, const char *src, size_t dest_size) {
+    size_t dest_len = strlen(dest);
+    size_t i;
+    // Ensure there's room in 'dest' for appending 'src' plus the null-terminator.
+    if(dest_len + strlen(src) >= dest_size) {
+        char *new_dest = (char *)malloc(strlen(dest) + 100); 
+        if(new_dest==NULL)exit_error("Sting allocation failed");
+        strcpy(new_dest,dest);
+        char* temp = dest;
+        dest = new_dest;
+        if(strlen(dest)>100)free(temp);
+    }
+    // Copy characters from 'src' to the end of 'dest'.
+    for(i = 0; src[i] != '\0'; i++) {
+        dest[dest_len + i] = src[i];
+    }
+    // Null-terminate the resulting string.
+    dest[dest_len + i] = '\0';
+}
+
+
+char* temp_func_name_read(unsigned int address){
+    return NULL; 
+}
+
+
+void temp_func_name_write(unsigned int address, int data){
+    char buffer[10];
+    sprintf(buffer, "%d", data);
+    switch (address){
+        case 0x51000000:
+            append_to_string(port_A_data, buffer, 100);
+            return;
+        case 0x51000005:
+            append_to_string(port_A_command, buffer, 100);
+            return;
+        case 0x51000002:
+            append_to_string(port_B_data, buffer, 100);
+            return;
+        case 0x51000006:
+            append_to_string(port_B_command, buffer, 100);
+            return;
+        default:
+            exit_error("temp error msg%08x\n", address);
+    }
+}
+
+int temp_func_name_check(unsigned int address) {
+    switch (address) {
+        case 0x51000000:
+        case 0x51000005:
+        case 0x51000002:
+        case 0x51000006:
+            return 1;
+        default:
+            return 0;
+    }
+}
+
 /* return PIO port define */
 unsigned int obio_pio_port(unsigned int address) {
     switch (address) {
@@ -146,6 +216,7 @@ unsigned int obio_pio_port(unsigned int address) {
             exit_error("Invalid OBIO PIO port address %08x\n", address);
     }
 }
+
 
 /* write PIO port define */
 void obio_pio_port_write(unsigned int address, unsigned int value) {
@@ -187,6 +258,7 @@ int obio_pio_port_check(unsigned int address) {
 /* reads in 8 bits from memory array */
 unsigned int m68k_read_memory_8(unsigned int address) {
     if(obio_pio_port_check(address)) return obio_pio_port(address);
+    else if(temp_func_name_check(address))return temp_func_name_read(address);
     else if (address >= MAX_MEM) {
         if (address >= BOOTARG_START && address <= BOOTARG_END) {
             return bootarg[address - BOOTARG_START];
@@ -200,6 +272,7 @@ unsigned int m68k_read_memory_8(unsigned int address) {
 /* reads in 16 bits from memory array */
 unsigned int m68k_read_memory_16(unsigned int address) {
     if(obio_pio_port_check(address)) return obio_pio_port(address);
+    else if(temp_func_name_check(address))return temp_func_name_read(address);
     else if (address >= MAX_MEM) {
         exit_error("Attempted to read byte(read_16) from address %08x beyond memory size\n", address);
     }
@@ -210,6 +283,7 @@ unsigned int m68k_read_memory_16(unsigned int address) {
 /* reads in 32 bits from memory array */
 unsigned int m68k_read_memory_32(unsigned int address) {
     if(obio_pio_port_check(address)) return obio_pio_port(address);
+    else if(temp_func_name_check(address))return temp_func_name_read(address);
     else if (address >= MAX_MEM) {
         if(address == MEMAVAIL_ADDRESS) {
             printf("Read 32 from MEMAVAIL_ADDRESS (%08x) value: %08x\n",MEMAVAIL_ADDRESS, MEMAVAIL_VALUE_ADDRESS);
@@ -243,6 +317,10 @@ void m68k_write_memory_8(unsigned int address, unsigned int value) {
         obio_pio_port_write(address, value);
         return;
     }
+    else if(temp_func_name_check(address)){
+        temp_func_name_write(address, value);
+        return;
+    }
     if (address > MAX_MEM) {
         exit_error("Attempted to write byte to address %08x beyond memory size\n", address);
     }
@@ -260,6 +338,10 @@ void m68k_write_memory_16(unsigned int address, unsigned int value) {
         obio_pio_port_write(address, value);
         return;
     }
+    else if(temp_func_name_check(address)){
+        temp_func_name_write(address, value);
+        return;
+    }
     if (address > MAX_MEM) {
         exit_error("Attempted to write byte to address %08x beyond memory size\n", address);
     }
@@ -275,6 +357,10 @@ void m68k_write_memory_16(unsigned int address, unsigned int value) {
 void m68k_write_memory_32(unsigned int address, unsigned int value) {
     if(obio_pio_port_check(address)) {
         obio_pio_port_write(address, value);
+        return;
+    }
+    else if(temp_func_name_check(address)){
+        temp_func_name_write(address, value);
         return;
     }
     if (address > MAX_MEM) {
