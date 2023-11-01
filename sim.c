@@ -170,16 +170,16 @@ void temp_func_name_write(unsigned int address, unsigned char data){
     sprintf(buffer, "%0x (%c)", data,data);
     switch (address){
         case 0x51000000:
-            //append_to_string(port_A_data, buffer, &port_A_data_size);
+            append_to_string(port_A_data, buffer, &port_A_data_size);
             return;
         case 0x51000001:
-            //append_to_string(port_B_data, buffer, &port_B_data_size);
+            append_to_string(port_B_data, buffer, &port_B_data_size);
             return;
         case 0x51000002:
             append_to_string(&port_A_command, buffer, &port_A_command_size);
             return;
         case 0x51000006:
-            //append_to_string(port_B_command, buffer, &port_B_command_size);
+            append_to_string(port_B_command, buffer, &port_B_command_size);
             return;
         default:
             exit_error("temp error msg%08x\n", address);
