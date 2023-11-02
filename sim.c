@@ -138,20 +138,20 @@ void exit_error(char* fmt, ...)
 //use unsigned int to store data
 char *port_A_data, *port_B_data, *port_A_command, *port_B_command;
 size_t port_A_data_size, port_A_command_size, port_B_data_size, port_B_command_size;
+#define BUF_STEP_SIZE 10
+
 
 void append_to_string(char **dest, const char *src, size_t *dest_size) {
    size_t dest_len = strlen(*dest);
    size_t src_len = strlen(src);
    if(dest_len + src_len + 1 > *dest_size)
    {
-      char* temp = (char*)malloc(*dest_size + 100);
-      *dest_size += 100;
+      char* temp = (char*)malloc(*dest_size + BUF_STEP_SIZE);
+      *dest_size += BUF_STEP_SIZE;
       strcpy(temp, *dest);
       strcat(temp, src);
       free(*dest);
       *dest = temp;
-      printf("%s\n", *dest);
-      getc(stdin);
    }
    else
    {
@@ -161,13 +161,13 @@ void append_to_string(char **dest, const char *src, size_t *dest_size) {
 
 
 unsigned char temp_func_name_read(unsigned int address){
-    return 0; 
+    return 0xff; 
 }
 
 
 void temp_func_name_write(unsigned int address, unsigned char data){
     char buffer[10];
-    sprintf(buffer, "%0x (%c)", data,data);
+    sprintf(buffer, "%c", data);
     switch (address){
         case 0x51000000:
             append_to_string(&port_A_data, buffer, &port_A_data_size);
@@ -420,12 +420,12 @@ void load_section(const struct section* sec) {
 }
 
 int main(int argc, char* argv[]) {
-   port_A_data = (char *)malloc(100);
-   port_A_command = (char *)malloc(100);
-   port_B_data = (char *)malloc(100);
-   port_B_command = (char *)malloc(100);
+   port_A_data = (char *)malloc(BUF_STEP_SIZE);
+   port_A_command = (char *)malloc(BUF_STEP_SIZE);
+   port_B_data = (char *)malloc(BUF_STEP_SIZE);
+   port_B_command = (char *)malloc(BUF_STEP_SIZE);
    
-   port_A_data_size =  port_A_command_size = port_B_data_size = port_B_command_size = 100;
+   port_A_data_size =  port_A_command_size = port_B_data_size = port_B_command_size = BUF_STEP_SIZE;
       
     unsigned int text_section_address = 0x0000c000; // Example address
 
