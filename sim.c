@@ -137,8 +137,11 @@ void exit_error(char* fmt, ...)
 //when read return null
 //use unsigned int to store data
 char *port_A_data, *port_B_data, *port_A_command, *port_B_command;
+size_t port_A_data_n, port_A_data_p;
+size_t port_B_data_n, port_B_data_p;
+
 size_t port_A_data_size, port_A_command_size, port_B_data_size, port_B_command_size;
-#define BUF_STEP_SIZE 10
+#define BUF_STEP_SIZE 100
 
 
 void append_to_string(char **dest, const char *src, size_t *dest_size) {
@@ -170,10 +173,24 @@ void temp_func_name_write(unsigned int address, unsigned char data){
     sprintf(buffer, "%c", data);
     switch (address){
         case 0x51000000:
+            port_A_data_n++;
             append_to_string(&port_A_data, buffer, &port_A_data_size);
+            if(data == '\n')
+            {
+               printf("portA::");
+               puts(port_A_data+port_A_data_p);
+               port_A_data_p = port_A_data_n;
+            }
             return;
         case 0x51000001:
+            port_B_data_n++;
             append_to_string(&port_B_data, buffer, &port_B_data_size);
+            if(data == '\n')
+            {
+               printf("portB::");
+               puts(port_B_data+port_B_data_p);
+               port_B_data_p = port_A_data_n;
+            }
             return;
         case 0x51000002:
             append_to_string(&port_A_command, buffer, &port_A_command_size);
@@ -424,6 +441,9 @@ int main(int argc, char* argv[]) {
    port_A_command = (char *)malloc(BUF_STEP_SIZE);
    port_B_data = (char *)malloc(BUF_STEP_SIZE);
    port_B_command = (char *)malloc(BUF_STEP_SIZE);
+   
+   port_A_data_p = port_A_data_n = 0;
+   port_B_data_p = port_A_data_n = 0;
    
    port_A_data_size =  port_A_command_size = port_B_data_size = port_B_command_size = BUF_STEP_SIZE;
       
