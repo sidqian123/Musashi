@@ -129,13 +129,12 @@ void exit_error(char* fmt, ...)
 }
 
 
-//portA data 51000000 (2 occurances)
-//portA command 51000002
-//portB data 51000001
-//portB command 51000006 (2)
-//two string to store portA and portB
-//when read return null
-//use unsigned int to store data
+/*portA data 51000000 
+portA command 51000002
+portB data 51000001
+portB command 51000006 */
+
+/*strings used to store serial IO port writes*/
 char *port_A_data, *port_B_data, *port_A_command, *port_B_command;
 size_t port_A_data_n, port_A_data_p;
 size_t port_B_data_n, port_B_data_p;
@@ -143,7 +142,7 @@ size_t port_B_data_n, port_B_data_p;
 size_t port_A_data_size, port_A_command_size, port_B_data_size, port_B_command_size;
 #define BUF_STEP_SIZE 100
 
-
+/*used for appending commands and data to serial IO ports*/
 void append_to_string(char **dest, const char *src, size_t *dest_size) {
    size_t dest_len = strlen(*dest);
    size_t src_len = strlen(src);
@@ -162,13 +161,14 @@ void append_to_string(char **dest, const char *src, size_t *dest_size) {
    }
 }
 
-
-unsigned char temp_func_name_read(unsigned int address){
+/* read serial IO port define */
+unsigned char serial_IO_read(unsigned int address){
     return 0xff; 
 }
 
 
-void temp_func_name_write(unsigned int address, unsigned char data){
+/* write serial IO port define */
+void serial_IO_write(unsigned int address, unsigned char data){
     char buffer[10];
     sprintf(buffer, "%c", data);
     switch (address){
@@ -203,7 +203,9 @@ void temp_func_name_write(unsigned int address, unsigned char data){
     }
 }
 
-int temp_func_name_check(unsigned int address) {
+
+/* check if it is requesting serial IO port */
+int serial_IO_check(unsigned int address) {
     switch (address) {
         case 0x51000000:
         case 0x51000001:
@@ -277,7 +279,7 @@ int obio_pio_port_check(unsigned int address) {
 /* reads in 8 bits from memory array */
 unsigned int m68k_read_memory_8(unsigned int address) {
     if(obio_pio_port_check(address)) return obio_pio_port(address);
-    else if(temp_func_name_check(address)) return temp_func_name_read(address);
+    else if(serial_IO_check(address)) return serial_IO_read(address);
     else if (address >= MAX_MEM) {
         if (address >= BOOTARG_START && address <= BOOTARG_END) {
             return bootarg[address - BOOTARG_START];
@@ -291,7 +293,7 @@ unsigned int m68k_read_memory_8(unsigned int address) {
 /* reads in 16 bits from memory array */
 unsigned int m68k_read_memory_16(unsigned int address) {
     if(obio_pio_port_check(address)) return obio_pio_port(address);
-    else if(temp_func_name_check(address))return temp_func_name_read(address);
+    else if(serial_IO_check(address))return serial_IO_read(address);
     else if (address >= MAX_MEM) {
         exit_error("Attempted to read byte(read_16) from address %08x beyond memory size\n", address);
     }
@@ -302,7 +304,7 @@ unsigned int m68k_read_memory_16(unsigned int address) {
 /* reads in 32 bits from memory array */
 unsigned int m68k_read_memory_32(unsigned int address) {
     if(obio_pio_port_check(address)) return obio_pio_port(address);
-    else if(temp_func_name_check(address))return temp_func_name_read(address);
+    else if(serial_IO_check(address))return serial_IO_read(address);
     else if (address >= MAX_MEM) {
         if(address == MEMAVAIL_ADDRESS) {
             printf("Read 32 from MEMAVAIL_ADDRESS (%08x) value: %08x\n",MEMAVAIL_ADDRESS, MEMAVAIL_VALUE_ADDRESS);
@@ -336,8 +338,8 @@ void m68k_write_memory_8(unsigned int address, unsigned int value) {
         obio_pio_port_write(address, value);
         return;
     }
-    else if(temp_func_name_check(address)){
-        temp_func_name_write(address, value);
+    else if(serial_IO_check(address)){
+        serial_IO_write(address, value);
         return;
     }
     if (address > MAX_MEM) {
@@ -357,8 +359,8 @@ void m68k_write_memory_16(unsigned int address, unsigned int value) {
         obio_pio_port_write(address, value);
         return;
     }
-    else if(temp_func_name_check(address)){
-        temp_func_name_write(address, value);
+    else if(serial_IO_check(address)){
+        serial_IO_write(address, value);
         return;
     }
     if (address > MAX_MEM) {
@@ -378,8 +380,8 @@ void m68k_write_memory_32(unsigned int address, unsigned int value) {
         obio_pio_port_write(address, value);
         return;
     }
-    else if(temp_func_name_check(address)){
-        temp_func_name_write(address, value);
+    else if(serial_IO_check(address)){
+        serial_IO_write(address, value);
         return;
     }
     if (address > MAX_MEM) {
