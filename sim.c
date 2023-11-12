@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#include "c_compat.hpp"
 
 
 #define MAX_ROM 0xfff                           /* Memory size for rom */
@@ -85,7 +86,7 @@ void data_bus_recorder(const char *string, unsigned int address, unsigned int si
     if(address <= MAX_RAM)
         {
             printf("%s@RAM: %08x", string, address);
-        
+
         if(size == 1)
         {
             printf(" value: %02x\n", (g_mem[address]) );
@@ -98,7 +99,7 @@ void data_bus_recorder(const char *string, unsigned int address, unsigned int si
         {
             printf(" value: %02x%02x%02x%02x\n", g_mem[address], g_mem[address+1], g_mem[address+2], g_mem[address+3]);
         }
-    }    
+    }
 }
 
 /* Exit with an error message.  Use printf syntax. */
@@ -116,7 +117,7 @@ void exit_error(char* fmt, ...)
 
     /* FILE *out = stderr; */
     FILE *out = stdout;
-    
+
     va_start(args, fmt);
     vfprintf(out, fmt, args);
     va_end(args);
@@ -129,7 +130,7 @@ void exit_error(char* fmt, ...)
 }
 
 
-/*portA data 51000000 
+/*portA data 51000000
 portA command 51000002
 portB data 51000001
 portB command 51000006 */
@@ -161,120 +162,120 @@ void append_to_string(char **dest, const char *src, size_t *dest_size) {
    }
 }
 
-/* read serial IO port define */
-unsigned char serial_IO_read(unsigned int address){
-    return 0xff; 
-}
-
-
-/* write serial IO port define */
-void serial_IO_write(unsigned int address, unsigned char data){
-    char buffer[10];
-    sprintf(buffer, "%c", data);
-    switch (address){
-        case 0x51000000:
-            port_A_data_n++;
-            append_to_string(&port_A_data, buffer, &port_A_data_size);
-            if(data == '\n')
-            {
-               printf("portA::");
-               puts(port_A_data+port_A_data_p);
-               port_A_data_p = port_A_data_n;
-            }
-            return;
-        case 0x51000001:
-            port_B_data_n++;
-            append_to_string(&port_B_data, buffer, &port_B_data_size);
-            if(data == '\n')
-            {
-               printf("portB::");
-               puts(port_B_data+port_B_data_p);
-               port_B_data_p = port_A_data_n;
-            }
-            return;
-        case 0x51000002:
-            append_to_string(&port_A_command, buffer, &port_A_command_size);
-            return;
-        case 0x51000006:
-            append_to_string(&port_B_command, buffer, &port_B_command_size);
-            return;
-        default:
-            exit_error("temp error msg%08x\n", address);
-    }
-}
-
-
-/* check if it is requesting serial IO port */
-int serial_IO_check(unsigned int address) {
-    switch (address) {
-        case 0x51000000:
-        case 0x51000001:
-        case 0x51000002:
-        case 0x51000006:
-            return 1;
-        default:
-            return 0;
-    }
-}
-
-/* return PIO port define */
-unsigned int obio_pio_port(unsigned int address) {
-    switch (address) {
-        case 0x49000000:
-            printf("Read OBIO_PIO0A\n");
-            return OBIO_PIO0A;
-        case 0x49000001:
-            printf("Read OBIO_PIO0B\n");
-            return OBIO_PIO0B;
-        case 0x49000002:
-            printf("Read OBIO_PIO0C\n");
-            return OBIO_PIO0C;
-        case 0x49000003:
-            printf("Read OBIO_PIO0 Control\n");
-            return OBIO_PIO0;
-        default:
-            exit_error("Invalid OBIO PIO port address %08x\n", address);
-            return 0; //what should we return here?
-    }
-}
-
-
-/* write PIO port define */
-void obio_pio_port_write(unsigned int address, unsigned int value) {
-    switch (address) {
-        case 0x49000000:
-            printf("Write OBIO_PIO0A\n");
-            OBIO_PIO0A = value;
-            break;
-        case 0x49000001:
-            printf("Write OBIO_PIO0B\n");
-            OBIO_PIO0B = value;
-            break;
-        case 0x49000002:
-            printf("Write OBIO_PIO0C\n");
-            OBIO_PIO0C = value;
-            break;
-        case 0x49000003:
-            printf("Write OBIO_PIO0 Control\n");
-            OBIO_PIO0 = value;
-            break;
-        default:
-            exit_error("Invalid OBIO PIO port address %08x\n", address);
-    }
-}
-
-/* check if it is requesting OBIO PIO port */
-int obio_pio_port_check(unsigned int address) {
-    switch (address) {
-        case 0x49000000:
-        case 0x49000001:
-        case 0x49000002:
-        case 0x49000003:
-            return 1;
-        default:
-            return 0;
-    }
-}
+///* read serial IO port define */
+//unsigned char serial_IO_read(unsigned int address){
+//    return 0xff;
+//}
+//
+//
+///* write serial IO port define */
+//void serial_IO_write(unsigned int address, unsigned char data){
+//    char buffer[10];
+//    sprintf(buffer, "%c", data);
+//    switch (address){
+//        case 0x51000000:
+//            port_A_data_n++;
+//            append_to_string(&port_A_data, buffer, &port_A_data_size);
+//            if(data == '\n')
+//            {
+//               printf("portA::");
+//               puts(port_A_data+port_A_data_p);
+//               port_A_data_p = port_A_data_n;
+//            }
+//            return;
+//        case 0x51000001:
+//            port_B_data_n++;
+//            append_to_string(&port_B_data, buffer, &port_B_data_size);
+//            if(data == '\n')
+//            {
+//               printf("portB::");
+//               puts(port_B_data+port_B_data_p);
+//               port_B_data_p = port_A_data_n;
+//            }
+//            return;
+//        case 0x51000002:
+//            append_to_string(&port_A_command, buffer, &port_A_command_size);
+//            return;
+//        case 0x51000006:
+//            append_to_string(&port_B_command, buffer, &port_B_command_size);
+//            return;
+//        default:
+//            exit_error("temp error msg%08x\n", address);
+//    }
+//}
+//
+//
+///* check if it is requesting serial IO port */
+//int serial_IO_check(unsigned int address) {
+//    switch (address) {
+//        case 0x51000000:
+//        case 0x51000001:
+//        case 0x51000002:
+//        case 0x51000006:
+//            return 1;
+//        default:
+//            return 0;
+//    }
+//}
+//
+///* return PIO port define */
+//unsigned int obio_pio_port(unsigned int address) {
+//    switch (address) {
+//        case 0x49000000:
+//            printf("Read OBIO_PIO0A\n");
+//            return OBIO_PIO0A;
+//        case 0x49000001:
+//            printf("Read OBIO_PIO0B\n");
+//            return OBIO_PIO0B;
+//        case 0x49000002:
+//            printf("Read OBIO_PIO0C\n");
+//            return OBIO_PIO0C;
+//        case 0x49000003:
+//            printf("Read OBIO_PIO0 Control\n");
+//            return OBIO_PIO0;
+//        default:
+//            exit_error("Invalid OBIO PIO port address %08x\n", address);
+//            return 0; //what should we return here?
+//    }
+//}
+//
+//
+///* write PIO port define */
+//void obio_pio_port_write(unsigned int address, unsigned int value) {
+//    switch (address) {
+//        case 0x49000000:
+//            printf("Write OBIO_PIO0A\n");
+//            OBIO_PIO0A = value;
+//            break;
+//        case 0x49000001:
+//            printf("Write OBIO_PIO0B\n");
+//            OBIO_PIO0B = value;
+//            break;
+//        case 0x49000002:
+//            printf("Write OBIO_PIO0C\n");
+//            OBIO_PIO0C = value;
+//            break;
+//        case 0x49000003:
+//            printf("Write OBIO_PIO0 Control\n");
+//            OBIO_PIO0 = value;
+//            break;
+//        default:
+//            exit_error("Invalid OBIO PIO port address %08x\n", address);
+//    }
+//}
+//
+///* check if it is requesting OBIO PIO port */
+//int obio_pio_port_check(unsigned int address) {
+//    switch (address) {
+//        case 0x49000000:
+//        case 0x49000001:
+//        case 0x49000002:
+//        case 0x49000003:
+//            return 1;
+//        default:
+//            return 0;
+//    }
+//}
 
 /* reads in 8 bits from memory array */
 unsigned int m68k_read_memory_8(unsigned int address) {
