@@ -1,17 +1,17 @@
 EXENAME = sim
 
-MUSASHIFILES = m68kcpu.c m68kdasm.c softfloat/softfloat.c
-MAINFILES = sim.c
+MUSASHIFILES = m68kcpu.c m68kdasm.c softfloat/softfloat.c sim.c
+MAINFILES = main.cpp
 MUSASHIGENCFILES = m68kops.c
 MUSASHIGENHFILES = m68kops.h
 MUSASHIGENERATOR = m68kmake
 
-CPPFILES = serial_io.cpp obio_pio.cpp c_compat.cpp
+CPPFILES = $(MAINFILES) serial_io.cpp obio_pio.cpp mem.cpp c_compat.cpp cpu.cpp
 
 EXE =
 EXEPATH = ./
 
-CFILES = $(MAINFILES) $(MUSASHIFILES) $(MUSASHIGENCFILES)
+CFILES = $(MUSASHIFILES) $(MUSASHIGENCFILES)
 OFILES = $(CFILES:.c=.o)
 CPP_OFILES = $(CPPFILES:.cpp=.o)
 DFILES = $(CFILES:.c=.d) $(CPPFILES:.cpp=.d)
@@ -32,13 +32,14 @@ clean:
 	rm -f $(DELETEFILES)
 
 $(TARGET): $(OFILES) $(CPP_OFILES) Makefile
-	g++ -o $@ $(OFILES) $(CPP_OFILES) $(LFLAGS) -lm
+	$(CPPC) -o $@ $(OFILES) $(CPP_OFILES) $(LFLAGS) -lm
 
 $(OFILES): %.o: %.c
 	$(CC) $(CFLAGS) -MM -MF $(@:.o=.d) -MT $@ $<
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(CPP_OFILES): %.o: %.cpp
+	$(CPPC) $(CPPFLAGS) -MM -MF $(@:.o=.d) -MT $@ $<
 	$(CPPC) $(CPPFLAGS) -c $< -o $@
 
 $(MUSASHIGENCFILES) $(MUSASHIGENHFILES): $(MUSASHIGENERATOR)$(EXE)

@@ -28,3 +28,6 @@ void obio_pio_port_write(unsigned int address, unsigned int value) {
 int obio_pio_port_check(unsigned int address) {
     return obioPio.check_port(address) ? 1 : 0;
 }
+void data_bus_recorder(const char *string, unsigned int address, unsigned int size){
+    util.data_bus_recorder(string, address, size);
+}
